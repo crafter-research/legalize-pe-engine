@@ -1,75 +1,81 @@
-# legalize-pe-engine
+# CLAUDE.md
 
-Engine for `crafter-research/legalize-pe`. Produces corpus following [SPEC v0.2](https://github.com/legalize-dev/legalize/blob/main/SPEC.md).
+This file is for Claude Code specifically. The cross-tool agent guide is at [AGENTS.md](./AGENTS.md) and applies to Claude as well.
 
-## Identity & commit conventions
+## Order of precedence
 
-- **Engine repo commits**: use Hunter's normal git identity (or whoever runs).
-- **Corpus repo commits** (any push from this engine to `crafter-research/legalize-pe`): MUST use Crafternauta bot identity:
-  - `GIT_AUTHOR_NAME="Crafternauta"`
-  - `GIT_AUTHOR_EMAIL="the.crafter.station@gmail.com"`
-  - `GIT_AUTHOR_DATE`: real publication date of the norm
-  - Same for `GIT_COMMITTER_*`
-- **Pre-1970 epoch hack**: git rejects dates before 1970. For pre-1970 norms (e.g., Código Civil 1936) use `GIT_AUTHOR_DATE=1970-01-02` but keep real `publication_date` in frontmatter and `Source-Date` trailer.
+1. Explicit user instruction in the current session.
+2. Saved memories in `~/.claude/projects/-Users-raillyhugo-hunter-brain/memory/` (auto-loaded).
+3. This file ([CLAUDE.md](./CLAUDE.md)) for Claude-Code-specific behavior.
+4. [AGENTS.md](./AGENTS.md) for project conventions any agent must follow.
+5. [docs/](./docs/) for design and architecture.
 
-## Commit message format (corpus)
+When two of these conflict, the lower number wins.
 
-```
-[<type>] <Title> — <articles affected or "versión original YYYY">
+## Claude-specific conventions
 
-Source-Id: <reform-id-or-norm-id>
-Source-Date: YYYY-MM-DD
-Norm-Id: <norm-id>
-```
+### When the user is in espanol mode
 
-Types per SPEC v0.2: `bootstrap`, `reform`, `new`, `repeal`, `correction`, `fix-pipeline`.
+Hunter (the user, full name Railly Hugo) writes in Spanish frequently. Respond in Spanish when he does. Code, comments, commit messages, and PR descriptions stay in English (project conventions, AGENTS.md). Do not transliterate accents — Stack is full UTF-8.
 
-## Stack
+### Never apologize for the tools
 
-- Bun 1.3+
-- Turborepo 2.x
-- Biome (no ESLint, no Prettier)
-- TypeScript strict mode
-- agent-browser 0.27+ for scraping
+If `agent-browser` errors out, the user wants to know why and how to fix it. Diagnose, do not apologize. Same for `bun install`, `vercel deploy`, etc.
 
-## Conventions
+### Bash command preferences
 
-- Frontmatter & commit messages in English (SPEC v0.2)
-- Filenames: official identifier in UPPERCASE with year suffix (`DLEG-295-1984.md`, `LEY-30220-2014.md`, `CON-1993.md`)
-- Layout flat at corpus root: `pe/`, `pe-ama/` ... `pe-uca/` (25 ISO 3166-2 regional codes + `pe-lim/` Lima Metro + `pe-cal/` Callao)
-- All scraping respects robots.txt + UA `legalize-bot/1.0 (+https://github.com/crafter-research/legalize-pe)` + ≤2 rps/portal
-- Path-Colombia for Constitution (32 commits reconstruidos from 31 reformas). Single-snapshot for ordinary laws V1.
+The user prefers bash one-liners that produce a verifiable diff over interactive prompts. When confirming work, end with a verification command, not a "is this OK?" question:
 
-## Three fetcher classes (V2 target, V1 only GobPeFetcher)
+```bash
+# Good
+git log --pretty="%h %an %ad %s" --date=short -- pe/CON-1993.md | head -5
 
-| Class | When to use | Used by |
-|---|---|---|
-| `GobPeFetcher` | GR publishes to `gob.pe/institucion/{slug}/normas-legales/tipos/{N}-{slug}` | Cusco, Lima Metro |
-| `StaticDirectoryFetcher` | Apache directory listing or WP uploads with predictable PDF paths | Tumbes, Moquegua |
-| `CatalogCrossrefFetcher` | Portal returns 403 — must use El Peruano CSV catalog as discovery | Áncash, Puno |
-
-Each `packages/jurisdictions/{slug}.ts` declares which fetcher class to use + parameters (~50 LOC).
-
-## SPEC v0.2 frontmatter (mandatory 8 fields)
-
-```yaml
----
-title: "<official title>"
-identifier: "<UPPERCASE-ID-YEAR>"
-country: "pe"
-rank: "<rank-string-country-specific>"
-publication_date: "YYYY-MM-DD"
-last_updated: "YYYY-MM-DD"
-status: "in_force | repealed | partially_repealed | annulled | expired"
-source: "<url>"
----
+# Avoid
+echo "Did this work?"
 ```
 
-Extension fields are welcome (flat, not under `extra:`): `jurisdiction`, `scope`, `issuing_entity`, `gazette_reference`, etc.
+### File edits
 
-## References
+Always prefer `Edit` over `Write` for existing files. `Write` over an existing file loses any in-flight linter changes. If you must `Write`, `Read` first in the same turn so the file state is current.
 
-- Shaping docs: `/Users/raillyhugo/hunter-brain/04_Projects/_active/legalize-pe-v2/`
-- SPEC: https://github.com/legalize-dev/legalize/blob/main/SPEC.md
-- ADDING_A_COUNTRY: https://github.com/legalize-dev/legalize-pipeline/blob/main/ADDING_A_COUNTRY.md
-- Bot identity: Crafternauta (`the.crafter.station@gmail.com`)
+### Track work with TaskCreate / TaskUpdate
+
+For multi-slice work (anything beyond a single small edit), use the task tools. The user reads them, and they help recover state if a session is interrupted.
+
+### Memory
+
+This project has saved memories the user has explicitly asked you to respect:
+
+- `feedback_no_em_dashes_pr.md` — never use `—` in commits, PRs, READMEs, external text
+- `user_name.md` — public attributions are "Railly Hugo", never "Hunter Quispe"
+- `feedback_no_coauthor.md` — never add Co-Authored-By Claude to commits
+- `pattern_agent_first.md` — CLI-first, agent-first design
+
+These are MEMORY rules. Follow them silently. Do not surface unless directly relevant.
+
+### Tool patterns documented in AGENTS.md
+
+For anything operational (commit identity, frontmatter spec, fetcher classes, scraping etiquette, things that have failed), the source of truth is [AGENTS.md](./AGENTS.md). Read it once per session. Do not duplicate its content here.
+
+## What to do at the start of a new Claude Code session in this repo
+
+1. Run `git log --oneline -5` in both this engine repo and `../legalize-pe` to see the latest state.
+2. Run `vercel inspect legalize-pe.crafter.ing 2>&1 | head -10` to confirm production is healthy.
+3. Check the federation PR: `gh pr view 17 --repo legalize-dev/legalize`.
+4. Look at `audit/recovered-*.md` if any new ones since last session.
+5. Read [AGENTS.md](./AGENTS.md) if you have not in this session.
+
+## What Hunter values in agent responses
+
+- Decisions and results, not narration.
+- Verification commands at the end.
+- Honest framing when something fails. The "webctl deferred V2" finding was valuable precisely because it was empirical.
+- Brevity. Three sentences over five.
+
+## What Hunter does not want
+
+- Em dashes.
+- "Hunter Quispe" anywhere external.
+- Co-authored-by tags.
+- Long ceremonial preambles before tool calls.
+- Asking permission for safe operations (reading files, running `git log`, running scripts in dry-run mode).
