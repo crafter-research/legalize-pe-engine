@@ -1,0 +1,351 @@
+---
+import { pwaInfo } from 'virtual:pwa-info'
+import Analytics from '@vercel/analytics/astro'
+
+interface Props {
+  title: string
+  description?: string
+  ogImage?: string
+}
+
+const {
+  title,
+  description = 'Legislación peruana como repositorio Git. Cada ley es un fichero Markdown, cada reforma un commit.',
+  ogImage,
+} = Astro.props
+
+// Generate OG image URL
+const siteUrl = Astro.url.origin
+const defaultOgImage = `${siteUrl}/api/og/index`
+const finalOgImage = ogImage || defaultOgImage
+---
+
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Legalize PE" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#000000" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:image" content={finalOgImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={finalOgImage} />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href={Astro.url.href} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="Legalize PE - RSS Feed" href="/feed.xml" />
+    <title>{title}</title>
+
+    <!-- Theme: prevent flash -->
+    <script is:inline>
+      const theme = localStorage.getItem('theme') || 'dark'
+      document.documentElement.setAttribute('data-theme', theme)
+    </script>
+
+    {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+    <!-- Global header with theme toggle -->
+    <header class="global-header">
+      <a href="/" class="logo">Legalize PE</a>
+      <nav class="header-nav">
+        <a href="/leyes">Normas</a>
+        <a href="/feed.xml" class="rss-link" title="RSS Feed" aria-label="RSS Feed">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="6.18" cy="17.82" r="2.18"/>
+            <path d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56zm0 5.66v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.47-4.43-9.9-9.9-9.9z"/>
+          </svg>
+        </a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar a tema claro" aria-pressed="false">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <slot />
+    <script>
+      import { registerSW } from 'virtual:pwa-register'
+
+      registerSW({
+        immediate: true,
+        onRegisteredSW(swScriptUrl) {
+          console.log('SW registered:', swScriptUrl)
+        },
+        onOfflineReady() {
+          console.log('PWA ready for offline use')
+        },
+      })
+
+      // Theme toggle
+      const themeToggle = document.getElementById('theme-toggle')
+
+      function updateThemeToggleAria() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark'
+        const isDark = current === 'dark'
+        themeToggle?.setAttribute('aria-pressed', String(!isDark))
+        themeToggle?.setAttribute('aria-label', isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro')
+      }
+
+      updateThemeToggleAria()
+
+      themeToggle?.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark'
+        const next = current === 'dark' ? 'light' : 'dark'
+        document.documentElement.setAttribute('data-theme', next)
+        localStorage.setItem('theme', next)
+        updateThemeToggleAria()
+      })
+    </script>
+    <Analytics />
+  </body>
+</html>
+
+<style is:global>
+  html {
+    color-scheme: dark light;
+  }
+
+  :root,
+  [data-theme="dark"] {
+    --color-bg: #000000;
+    --color-bg-secondary: #0a0a0a;
+    --color-text: #ffffff;
+    --color-text-muted: #9a9a9a;
+    --color-border: #333333;
+    --color-accent: #ffffff;
+    --color-accent-hover: #cccccc;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  [data-theme="light"] {
+    --color-bg: #ffffff;
+    --color-bg-secondary: #f5f5f5;
+    --color-text: #1a1a1a;
+    --color-text-muted: #666666;
+    --color-border: #e0e0e0;
+    --color-accent: #1a1a1a;
+    --color-accent-hover: #444444;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    background: var(--color-bg-secondary);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  pre {
+    font-family: var(--font-mono);
+    background: var(--color-bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    border: 1px solid var(--color-border);
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+  }
+
+  /* Skip link for keyboard navigation */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.75rem 1.25rem;
+    background: var(--color-accent);
+    color: #000;
+    border-radius: 0 0 8px 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: top 0.2s;
+  }
+
+  .skip-link:focus {
+    top: 0;
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Focus styles for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Global header */
+  .global-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .logo {
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .logo:hover {
+    text-decoration: none;
+    opacity: 0.8;
+  }
+
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-nav a {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .header-nav a:hover {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .rss-link {
+    display: flex;
+    align-items: center;
+  }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .theme-toggle:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+    border-color: var(--color-text-muted);
+  }
+
+  /* Show/hide sun/moon icons based on theme */
+  [data-theme="dark"] .icon-sun { display: block; }
+  [data-theme="dark"] .icon-moon { display: none; }
+  [data-theme="light"] .icon-sun { display: none; }
+  [data-theme="light"] .icon-moon { display: block; }
+
+  /* Print styles */
+  @media print {
+    .global-header,
+    .skip-link,
+    .theme-toggle,
+    .action-buttons,
+    .version-history,
+    .toc {
+      display: none !important;
+    }
+
+    body {
+      background: white;
+      color: black;
+    }
+
+    .prose {
+      font-size: 11pt;
+      line-height: 1.5;
+    }
+  }
+</style>

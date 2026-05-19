@@ -1,0 +1,732 @@
+---
+export const prerender = true
+
+import Layout from '../layouts/Layout.astro'
+
+const requestExample = `{
+  "query": "string"  // Mínimo 2 caracteres
+}`
+
+const responseExample = `{
+  "query": "string",
+  "results": [
+    {
+      "id": "string",
+      "titulo": "string",
+      "rango": "string",
+      "estado": "string",
+      "fechaPublicacion": "string",
+      "bodyPreview": "string",
+      "materias": ["string"],
+      "score": number,
+      "matchReasons": ["string"]
+    }
+  ],
+  "totalResults": number
+}`
+
+const curlExample = `curl -X POST https://legalize.crafter.ing/api/search/smart \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "query": "despido injustificado"
+  }'`
+
+const javascriptExample = `const response = await fetch('https://legalize.crafter.ing/api/search/smart', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    query: 'despido injustificado'
+  })
+});
+
+const data = await response.json();
+console.log(data);`
+
+const pythonExample = `import requests
+
+response = requests.post(
+  'https://legalize.crafter.ing/api/search/smart',
+  headers={'Content-Type': 'application/json'},
+  json={'query': 'despido injustificado'}
+)
+
+data = response.json()
+print(data)`
+---
+
+<Layout
+  title="API para Desarrolladores — Legalize PE"
+  description="Documentación de la API de búsqueda inteligente con NLP en español para consultas legales."
+>
+  <main id="main-content">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Navegación de ruta">
+        <a href="/">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">API</span>
+      </nav>
+
+      <header class="page-header">
+        <h1>API para Desarrolladores</h1>
+        <p class="subtitle">
+          Integra búsqueda inteligente con NLP en español en tu aplicación.
+        </p>
+      </header>
+
+      <section class="api-section">
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div class="endpoint-method">POST</div>
+            <code class="endpoint-url">/api/search/smart</code>
+          </div>
+          <p class="endpoint-description">
+            Búsqueda inteligente con NLP en español que identifica conceptos legales,
+            materias y contexto para encontrar las normas más relevantes.
+          </p>
+        </div>
+
+        <div class="section-card">
+          <h2>Request</h2>
+          <div class="spec-item">
+            <span class="spec-label">Content-Type</span>
+            <code>application/json</code>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Body</span>
+          </div>
+          <pre><code>{requestExample}</code></pre>
+        </div>
+
+        <div class="section-card">
+          <h2>Response</h2>
+          <div class="spec-item">
+            <span class="spec-label">Status</span>
+            <code>200 OK</code>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Body</span>
+          </div>
+          <pre><code>{responseExample}</code></pre>
+        </div>
+
+        <div class="section-card">
+          <h2>Probar la API</h2>
+          <div class="try-it">
+            <label for="api-query" class="try-label">Query</label>
+            <input
+              type="text"
+              id="api-query"
+              placeholder="Ejemplo: despido injustificado"
+              class="try-input"
+              aria-label="Query de prueba"
+            />
+            <button type="button" id="execute-btn" class="btn-primary">
+              Ejecutar
+            </button>
+
+            <div id="loading-indicator" class="loading-indicator" style="display: none;">
+              <span>Ejecutando...</span>
+            </div>
+
+            <div id="response-container" style="display: none;">
+              <div class="response-header">
+                <span class="response-label">Response</span>
+                <div class="response-meta">
+                  <span id="response-status" class="response-status"></span>
+                  <span id="response-time" class="response-time"></span>
+                </div>
+              </div>
+              <pre id="response-body" class="response-body"><code></code></pre>
+            </div>
+
+            <div id="error-container" class="error-container" style="display: none;">
+              <div class="error-header">Error</div>
+              <pre id="error-body" class="error-body"><code></code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>Ejemplos de Código</h2>
+
+          <div class="tabs">
+            <button type="button" class="tab-btn active" data-tab="curl">cURL</button>
+            <button type="button" class="tab-btn" data-tab="javascript">JavaScript</button>
+            <button type="button" class="tab-btn" data-tab="python">Python</button>
+          </div>
+
+          <div class="tab-content active" data-tab="curl">
+            <pre><code>{curlExample}</code></pre>
+          </div>
+
+          <div class="tab-content" data-tab="javascript">
+            <pre><code>{javascriptExample}</code></pre>
+          </div>
+
+          <div class="tab-content" data-tab="python">
+            <pre><code>{pythonExample}</code></pre>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>Rate Limiting</h2>
+          <p class="info-text">
+            El API está limitado a <strong>100 solicitudes por minuto</strong> por dirección IP.
+            Si excedes este límite, recibirás una respuesta <code>429 Too Many Requests</code>.
+          </p>
+        </div>
+
+        <div class="section-card">
+          <h2>Consejos para Consultas Efectivas</h2>
+          <ul class="tips-list">
+            <li>
+              <strong>Usa lenguaje natural:</strong> El sistema entiende consultas en español coloquial.
+            </li>
+            <li>
+              <strong>Sé específico:</strong> Incluye detalles relevantes sobre el contexto legal.
+            </li>
+            <li>
+              <strong>Menciona materias:</strong> Referencias a "laboral", "civil", "penal" mejoran la precisión.
+            </li>
+            <li>
+              <strong>Consultas cortas:</strong> Entre 3-15 palabras suele ser óptimo.
+            </li>
+            <li>
+              <strong>Evita tecnicismos innecesarios:</strong> El NLP normaliza y enriquece tu consulta.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="info-section">
+        <div class="info-card">
+          <h3>Soporte</h3>
+          <p>
+            Para reportar problemas o solicitar funcionalidades, abre un issue en
+            <a href="https://github.com/crafter-research/legalize-pe" target="_blank" rel="noopener">GitHub</a>.
+          </p>
+        </div>
+
+        <div class="info-card">
+          <h3>Licencia</h3>
+          <p>
+            Esta API es de uso gratuito. Los datos provienen del
+            <a href="https://www.gob.pe/spij" target="_blank" rel="noopener">SPIJ</a>
+            y están disponibles bajo términos de datos abiertos.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    padding: 1.5rem 0 0.5rem;
+  }
+
+  .breadcrumb a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-text);
+  }
+
+  /* Header */
+  .page-header {
+    padding: 1.5rem 0 2rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* API Section */
+  .api-section {
+    margin-bottom: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .endpoint-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+
+  .endpoint-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .endpoint-method {
+    background: #10b981;
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .endpoint-url {
+    font-size: 1rem;
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  .endpoint-description {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  /* Section Card */
+  .section-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+
+  .section-card h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .spec-item {
+    margin-bottom: 0.75rem;
+  }
+
+  .spec-label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .spec-label::after {
+    content: ':';
+  }
+
+  .info-text {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  /* Try It Section */
+  .try-it {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .try-label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .try-input {
+    width: 100%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .try-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  }
+
+  .try-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .btn-primary {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    align-self: flex-start;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #e5e5e5;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Loading Indicator */
+  .loading-indicator {
+    padding: 1rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+  }
+
+  .loading-indicator span::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  /* Response */
+  .response-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .response-label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .response-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .response-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: #10b981;
+    color: #000;
+  }
+
+  .response-status.error {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  .response-time {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .response-body {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 0;
+  }
+
+  /* Error */
+  .error-container {
+    padding: 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    border-radius: 8px;
+  }
+
+  .error-header {
+    font-size: 0.875rem;
+    color: #ef4444;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .error-body {
+    margin: 0;
+    background: transparent;
+    border: none;
+    color: #ef4444;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.5rem 1rem;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tab-btn:hover {
+    color: var(--color-text);
+  }
+
+  .tab-btn.active {
+    color: var(--color-text);
+    border-bottom-color: var(--color-accent);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Tips List */
+  .tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .tips-list li {
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .tips-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: 600;
+  }
+
+  .tips-list strong {
+    color: var(--color-text);
+  }
+
+  /* Info Section */
+  .info-section {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .info-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+
+  .info-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .info-card p {
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .info-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-card a {
+    color: var(--color-text);
+    text-decoration: underline;
+    text-decoration-color: var(--color-border);
+  }
+
+  .info-card a:hover {
+    text-decoration-color: var(--color-text);
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    .container {
+      padding: 0 1rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .endpoint-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .response-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .tabs {
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (min-width: 641px) {
+    .info-section {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+
+<script>
+  // Tab switching
+  const tabBtns = document.querySelectorAll('.tab-btn')
+  const tabContents = document.querySelectorAll('.tab-content')
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.dataset.tab
+
+      // Update buttons
+      tabBtns.forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+
+      // Update content
+      tabContents.forEach(content => {
+        if (content.dataset.tab === targetTab) {
+          content.classList.add('active')
+        } else {
+          content.classList.remove('active')
+        }
+      })
+    })
+  })
+
+  // API execution
+  const queryInput = document.getElementById('api-query') as HTMLInputElement
+  const executeBtn = document.getElementById('execute-btn') as HTMLButtonElement
+  const loadingIndicator = document.getElementById('loading-indicator')
+  const responseContainer = document.getElementById('response-container')
+  const errorContainer = document.getElementById('error-container')
+  const responseStatus = document.getElementById('response-status')
+  const responseTime = document.getElementById('response-time')
+  const responseBody = document.getElementById('response-body')?.querySelector('code')
+  const errorBody = document.getElementById('error-body')?.querySelector('code')
+
+  executeBtn.addEventListener('click', async () => {
+    const query = queryInput.value.trim()
+    if (!query) {
+      alert('Por favor ingresa una consulta')
+      return
+    }
+
+    // Hide previous results
+    responseContainer!.style.display = 'none'
+    errorContainer!.style.display = 'none'
+    loadingIndicator!.style.display = 'block'
+    executeBtn.disabled = true
+
+    const startTime = performance.now()
+
+    try {
+      const response = await fetch('/api/search/smart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      })
+
+      const endTime = performance.now()
+      const duration = Math.round(endTime - startTime)
+
+      const data = await response.json()
+
+      loadingIndicator!.style.display = 'none'
+
+      if (!response.ok) {
+        // Show error
+        errorContainer!.style.display = 'block'
+        if (errorBody) {
+          errorBody.textContent = JSON.stringify(data, null, 2)
+        }
+      } else {
+        // Show response
+        responseContainer!.style.display = 'block'
+        responseStatus!.textContent = `${response.status} ${response.statusText}`
+        responseStatus!.className = 'response-status'
+        responseTime!.textContent = `${duration}ms`
+        if (responseBody) {
+          responseBody.textContent = JSON.stringify(data, null, 2)
+        }
+      }
+    } catch (error) {
+      loadingIndicator!.style.display = 'none'
+      errorContainer!.style.display = 'block'
+      if (errorBody) {
+        errorBody.textContent = error instanceof Error ? error.message : 'Unknown error'
+      }
+    } finally {
+      executeBtn.disabled = false
+    }
+  })
+
+  // Allow Enter key to execute
+  queryInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      executeBtn.click()
+    }
+  })
+</script>

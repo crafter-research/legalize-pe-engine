@@ -1,0 +1,131 @@
+---
+export const prerender = true
+
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title="Sin conexión - Legalize PE">
+  <main id="main-content" class="container">
+    <div class="offline-content">
+      <div class="icon">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="64"
+          height="64"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M2 12 A10 10 0 0 1 22 12" opacity="0.3"></path>
+          <path d="M5 12 A7 7 0 0 1 19 12" opacity="0.5"></path>
+          <path d="M8.5 12 A3.5 3.5 0 0 1 15.5 12" opacity="0.7"></path>
+          <circle cx="12" cy="12" r="1"></circle>
+          <line x1="2" y1="2" x2="22" y2="22"></line>
+        </svg>
+      </div>
+
+      <h1>Sin conexión</h1>
+      <p>
+        No pudimos cargar esta página porque no tienes conexión a internet.
+      </p>
+
+      <div class="actions">
+        <button type="button" class="retry-btn" onclick="window.location.reload()">
+          Reintentar
+        </button>
+        <a href="/" class="home-link">Ir al inicio</a>
+      </div>
+
+      <div class="hint">
+        <p>
+          Las páginas que visitaste anteriormente pueden estar disponibles en caché.
+          Prueba navegando desde el <a href="/">inicio</a>.
+        </p>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .offline-content {
+    text-align: center;
+    max-width: 400px;
+  }
+
+  .icon {
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  p {
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .retry-btn {
+    background: var(--color-accent);
+    color: #000;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .retry-btn:hover {
+    background: var(--color-accent-hover);
+  }
+
+  .home-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+
+  .home-link:hover {
+    border-color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .hint {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
+
+  .hint p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+</style>

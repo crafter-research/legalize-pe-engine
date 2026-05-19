@@ -1,0 +1,29 @@
+{
+  "ir_version": "0.1.0",
+  "jurisdiction": "regioncusco",
+  "iso_code": "pe-cus",
+  "fetcher_type": "gob-pe",
+  "listing": {
+    "url": "https://www.gob.pe/institucion/regioncusco/normas-legales/tipos/13-ordenanza",
+    "pagination_strategy": "page_query_param",
+    "pagination_param": "page",
+    "items_per_page": 10,
+    "ref_pattern": {
+      "title_link": {
+        "role": "link",
+        "url_pattern": "^https://www\\.gob\\.pe/institucion/regioncusco/normas-legales/\\d+-",
+        "extracts": ["url", "name"]
+      },
+      "pdf_link": {
+        "role": "link",
+        "name_equals": "Descargar",
+        "url_pattern": "^https://cdn\\.www\\.gob\\.pe/uploads/document/file/",
+        "follows": "title_link",
+        "extracts": ["url"]
+      }
+    }
+  },
+  "rate_limit": { "rps": 1.5, "max_concurrent": 1 },
+  "user_agent": "legalize-bot/1.0 (+https://github.com/crafter-research/legalize-pe)",
+  "respects_robots_txt": true
+}

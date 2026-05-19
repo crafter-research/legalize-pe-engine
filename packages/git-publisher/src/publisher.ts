@@ -54,9 +54,11 @@ export class GitPublisher {
     const message = formatCommitMessage(input.commit);
     const authorDate = gitSafeAuthorDate(input.frontmatter.publication_date);
 
-    // simple-git's .commit() doesn't expose env, so use raw with env
+    // simple-git's .commit() doesn't expose env, so use raw with env.
+    // Note: must NOT inherit GIT_EDITOR from shell (simple-git rejects it as unsafe).
     const env = {
-      ...process.env,
+      PATH: process.env.PATH ?? "",
+      HOME: process.env.HOME ?? "",
       GIT_AUTHOR_NAME: CRAFTERNAUTA_NAME,
       GIT_AUTHOR_EMAIL: CRAFTERNAUTA_EMAIL,
       GIT_AUTHOR_DATE: authorDate,

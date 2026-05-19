@@ -1,0 +1,1766 @@
+---
+export const prerender = true
+
+import { readFileSync } from 'node:fs'
+import { marked } from 'marked'
+import Layout from '../../layouts/Layout.astro'
+import { buildIdToFileMap, parseFrontmatter, rangoLabels } from '../../lib/leyes'
+
+export async function getStaticPaths() {
+  const idToFileMap = buildIdToFileMap()
+  return [...idToFileMap.entries()].map(([id, absPath]) => ({
+    params: { id },
+    props: { absPath },
+  }))
+}
+
+const { id } = Astro.params
+const { absPath } = Astro.props
+
+const rawContent = readFileSync(absPath, 'utf-8')
+const { meta, body } = parseFrontmatter(rawContent)
+
+// Extract headings for TOC
+interface TocItem {
+  level: number
+  text: string
+  slug: string
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function extractHeadings(markdown: string): TocItem[] {
+  const headings: TocItem[] = []
+  const lines = markdown.split('\n')
+
+  for (const line of lines) {
+    const match = line.match(/^(#{2,4})\s+(.+)$/)
+    if (match) {
+      const level = match[1].length
+      const text = match[2].replace(/\*+/g, '').trim()
+      if (text.length > 0 && text.length < 150) {
+        headings.push({
+          level,
+          text,
+          slug: slugify(text),
+        })
+      }
+    }
+  }
+
+  return headings
+}
+
+const tocItems = extractHeadings(body)
+const hasToc = tocItems.length >= 3
+
+// Configure marked to add IDs and copy link buttons to headings
+marked.use({
+  renderer: {
+    heading({ tokens, depth }) {
+      const text = this.parser.parseInline(tokens)
+      const rawText = tokens.map(t => t.raw || '').join('')
+      const slug = slugify(rawText)
+      const linkIcon = `<button class="heading-link" data-slug="${slug}" title="Copiar enlace" aria-label="Copiar enlace a esta seccion"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>`
+      return `<h${depth} id="${slug}">${text}${linkIcon}</h${depth}>\n`
+    }
+  }
+})
+
+const htmlContent = await marked(body)
+
+// Citation data
+const citationData = {
+  titulo: meta.title,
+  identificador: meta.identifier,
+  rango: rangoLabels[meta.rank] ?? meta.rank,
+  fechaPublicacion: meta.publication_date,
+  diarioOficial: meta.official_journal || 'El Peruano',
+}
+
+// JSON-LD structured data for SEO
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Legislation",
+  "name": meta.title,
+  "identifier": meta.identifier,
+  "legislationType": rangoLabels[meta.rank] ?? meta.rank,
+  "datePublished": meta.publication_date,
+  "jurisdiction": {
+    "@type": "AdministrativeArea",
+    "name": "Peru"
+  },
+  "inLanguage": "es",
+  "url": `https://legalize.crafter.ing/leyes/${id}`,
+  "publisher": {
+    "@type": "Organization",
+    "name": meta.official_journal || "El Peruano"
+  }
+}
+
+// Related laws - find laws with shared materias
+interface SearchIndexItem {
+  id: string
+  t: string
+  r: string
+  m: string[]
+}
+
+interface RelatedLaw {
+  id: string
+  titulo: string
+  rango: string
+  sharedMaterias: string[]
+  sharedCount: number
+}
+
+let relatedLaws: RelatedLaw[] = []
+try {
+  const searchIndexPath = join(process.cwd(), 'public/search-index.json')
+  const searchIndex: SearchIndexItem[] = JSON.parse(readFileSync(searchIndexPath, 'utf-8'))
+
+  const currentMaterias = meta.affected_articles || []
+
+  if (currentMaterias.length > 0) {
+    // Find laws with at least one shared materia
+    const related = searchIndex
+      .filter(law => {
+        if (law.id === id) return false
+        if (!law.m || law.m.length === 0) return false
+
+        const shared = law.m.filter(m => currentMaterias.includes(m))
+        return shared.length > 0
+      })
+      .map(law => {
+        const shared = law.m.filter(m => currentMaterias.includes(m))
+        return {
+          id: law.id,
+          titulo: law.t,
+          rango: rangoLabels[law.r] ?? law.r,
+          sharedMaterias: shared,
+          sharedCount: shared.length
+        }
+      })
+      .sort((a, b) => b.sharedCount - a.sharedCount)
+      .slice(0, 5)
+
+    relatedLaws = related
+  }
+} catch (error) {
+  // If search index doesn't exist or error loading, just show no related laws
+  console.error('Error loading related laws:', error)
+}
+---
+
+<Layout
+  title={`${meta.title} — Legalize PE`}
+  description={`${meta.title}. ${rangoLabels[meta.rank] ?? meta.rank} peruana publicada el ${meta.publication_date}.`}
+  ogImage={`${Astro.url.origin}/api/og/${id}`}
+>
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <main id="main-content">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Navegación de ruta">
+        <a href="/">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <a href="/leyes">Normas</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{id}</span>
+      </nav>
+
+      <div class="page-top">
+        <div class="page-header">
+          <h1>{meta.title}</h1>
+          <div class="meta-badges">
+            <span class="badge badge-rango">
+              {rangoLabels[meta.rank] ?? meta.rank}
+            </span>
+            {meta.status === 'vigente' && (
+              <span class="badge badge-vigente">Vigente</span>
+            )}
+          </div>
+          {meta.ocrQuality === 'poor' && (
+            <div class="ocr-warning" role="alert">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <div>
+                <strong>Calidad de texto limitada</strong>
+                <p>Este documento fue procesado con OCR desde un PDF escaneado antiguo. El texto puede contener errores de reconocimiento.</p>
+              </div>
+            </div>
+          )}
+          <dl class="meta-grid">
+            <div>
+              <dt>Publicacion</dt>
+              <dd>{meta.publication_date}</dd>
+            </div>
+            <div>
+              <dt>Ultima actualizacion</dt>
+              <dd>{meta.last_updated}</dd>
+            </div>
+            {meta.official_journal && (
+              <div>
+                <dt>Diario Oficial</dt>
+                <dd>{meta.official_journal}</dd>
+              </div>
+            )}
+            {meta.source && (
+              <div>
+                <dt>Fuente</dt>
+                <dd>
+                  <a href={meta.source} target="_blank" rel="noopener">
+                    SPIJ / Minjus<span class="sr-only"> (abre en nueva ventana)</span> &nearr;
+                  </a>
+                </dd>
+              </div>
+            )}
+          </dl>
+        </div>
+
+        <div class="action-buttons">
+          <button id="btn-bookmark" class="btn btn-primary" type="button" title="Guardar en favoritos">
+            <svg class="icon-bookmark-outline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <svg class="icon-bookmark-filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" style="display:none">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span class="btn-text" id="bookmark-text">Guardar</span>
+          </button>
+          <button id="btn-cite" class="btn btn-secondary" type="button">
+            Citar
+          </button>
+          <button id="btn-print" class="btn btn-secondary" type="button" title="Imprimir / Guardar PDF">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            <span class="btn-text">PDF</span>
+          </button>
+          <button id="btn-share" class="btn btn-secondary" type="button" title="Compartir">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            <span class="btn-text">Compartir</span>
+          </button>
+        </div>
+
+        <!-- Share Menu -->
+        <div id="share-menu" class="share-menu" hidden>
+          <button type="button" class="share-option" data-share="twitter">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            Twitter / X
+          </button>
+          <button type="button" class="share-option" data-share="linkedin">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+            LinkedIn
+          </button>
+          <button type="button" class="share-option" data-share="whatsapp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            WhatsApp
+          </button>
+          <button type="button" class="share-option" data-share="copy">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copiar enlace
+          </button>
+        </div>
+
+        <!-- Citation Modal -->
+        <div id="citation-modal" class="modal" hidden>
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Citar esta norma</h2>
+              <button type="button" class="modal-close" aria-label="Cerrar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="citation-format">
+                <label>Formato Legal Peruano</label>
+                <div class="citation-box">
+                  <code id="cite-legal"></code>
+                  <button type="button" class="btn-copy-cite" data-target="cite-legal">Copiar</button>
+                </div>
+              </div>
+              <div class="citation-format">
+                <label>APA 7</label>
+                <div class="citation-box">
+                  <code id="cite-apa"></code>
+                  <button type="button" class="btn-copy-cite" data-target="cite-apa">Copiar</button>
+                </div>
+              </div>
+              <div class="citation-format">
+                <label>URL permanente</label>
+                <div class="citation-box">
+                  <code id="cite-url"></code>
+                  <button type="button" class="btn-copy-cite" data-target="cite-url">Copiar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="version-history">
+        <button id="history-toggle" class="history-toggle-btn" aria-expanded="false" aria-controls="history-content">
+          <svg class="history-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Historial de versiones</span>
+          <span id="history-count" class="history-count-badge"></span>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div id="history-content" class="history-content" hidden aria-hidden="true">
+          <div id="history-list"></div>
+        </div>
+      </section>
+
+      {hasToc && (
+        <nav class="toc" aria-label="Tabla de contenidos">
+          <details open>
+            <summary class="toc-toggle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="15" y2="12"/>
+                <line x1="3" y1="18" x2="18" y2="18"/>
+              </svg>
+              Tabla de contenidos
+            </summary>
+            <ol class="toc-list">
+              {tocItems.map((item) => (
+                <li class={`toc-item toc-level-${item.level}`}>
+                  <a href={`#${item.slug}`}>{item.text}</a>
+                </li>
+              ))}
+            </ol>
+          </details>
+        </nav>
+      )}
+
+      <article class="content-box prose" set:html={htmlContent} />
+
+      {relatedLaws.length > 0 && (
+        <section class="related-laws">
+          <h2>Leyes Relacionadas</h2>
+          <ul class="related-laws-list">
+            {relatedLaws.map(law => (
+              <li class="related-law-item">
+                <a href={`/leyes/${law.id}`} class="related-law-link">
+                  <span class="related-law-title">{law.titulo}</span>
+                  <span class="related-law-rango">{law.rango}</span>
+                </a>
+                <div class="related-law-materias">
+                  {law.sharedMaterias.map(materia => (
+                    <span class="materia-tag">{materia}</span>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  </main>
+</Layout>
+
+<script define:vars={{ identificador: id, citationData: JSON.stringify(citationData) }}>
+  const citation = JSON.parse(citationData)
+
+  const btnCite = document.getElementById('btn-cite')
+  const citationModal = document.getElementById('citation-modal')
+
+  // Store the element that triggered the modal for focus restoration
+  let modalTriggerElement = null
+
+  // Citation Modal
+  function formatDate(dateStr) {
+    const [year, month, day] = dateStr.split('-')
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+    return `${Number.parseInt(day)} de ${months[Number.parseInt(month) - 1]} de ${year}`
+  }
+
+  function openCitationModal() {
+    const pageUrl = window.location.href.split('#')[0]
+
+    // Legal format: Ley N° 12345, publicada el 1 de enero de 2020 en el Diario Oficial El Peruano
+    const legalCite = `${citation.rango} ${citation.identificador.toUpperCase().replace(/-/g, ' ')}, publicada el ${formatDate(citation.fechaPublicacion)} en el Diario Oficial ${citation.diarioOficial}.`
+
+    // APA 7: Congreso de la Republica del Peru. (2020). Ley N° 12345, Titulo de la ley. El Peruano. URL
+    const year = citation.fechaPublicacion.split('-')[0]
+    const apaCite = `Congreso de la Republica del Peru. (${year}). ${citation.rango} ${citation.identificador.toUpperCase().replace(/-/g, ' ')}, ${citation.titulo}. ${citation.diarioOficial}. ${pageUrl}`
+
+    document.getElementById('cite-legal').textContent = legalCite
+    document.getElementById('cite-apa').textContent = apaCite
+    document.getElementById('cite-url').textContent = pageUrl
+
+    // Store the current active element to restore focus later
+    modalTriggerElement = document.activeElement
+
+    citationModal.hidden = false
+    document.body.style.overflow = 'hidden'
+
+    // Set focus to the modal close button after modal is shown
+    setTimeout(() => {
+      const closeButton = citationModal?.querySelector('.modal-close')
+      closeButton?.focus()
+    }, 10)
+  }
+
+  function closeCitationModal() {
+    citationModal.hidden = true
+    document.body.style.overflow = ''
+
+    // Restore focus to the trigger element
+    if (modalTriggerElement && typeof modalTriggerElement.focus === 'function') {
+      modalTriggerElement.focus()
+      modalTriggerElement = null
+    }
+  }
+
+  // Focus trap for citation modal
+  function handleModalKeydown(e) {
+    if (!citationModal || citationModal.hidden) return
+
+    // Close on Escape
+    if (e.key === 'Escape') {
+      closeCitationModal()
+      return
+    }
+
+    // Handle Tab key for focus trap
+    if (e.key === 'Tab') {
+      const focusableElements = citationModal.querySelectorAll(
+        'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+      )
+      const focusableArray = Array.from(focusableElements)
+      const firstFocusable = focusableArray[0]
+      const lastFocusable = focusableArray[focusableArray.length - 1]
+
+      if (focusableArray.length === 0) return
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstFocusable) {
+          e.preventDefault()
+          lastFocusable?.focus()
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastFocusable) {
+          e.preventDefault()
+          firstFocusable?.focus()
+        }
+      }
+    }
+  }
+
+  btnCite?.addEventListener('click', openCitationModal)
+  citationModal?.querySelector('.modal-backdrop')?.addEventListener('click', closeCitationModal)
+  citationModal?.querySelector('.modal-close')?.addEventListener('click', closeCitationModal)
+
+  // Add keydown listener for focus trap
+  document.addEventListener('keydown', handleModalKeydown)
+
+  // Copy citation buttons
+  document.querySelectorAll('.btn-copy-cite').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const targetId = btn.dataset.target
+      const text = document.getElementById(targetId)?.textContent || ''
+      try {
+        await navigator.clipboard.writeText(text)
+        btn.textContent = 'Copiado!'
+        setTimeout(() => { btn.textContent = 'Copiar' }, 2000)
+      } catch {
+        btn.textContent = 'Error'
+        setTimeout(() => { btn.textContent = 'Copiar' }, 2000)
+      }
+    })
+  })
+
+  // Heading link copy
+  document.querySelectorAll('.heading-link').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault()
+      const slug = btn.dataset.slug
+      const url = `${window.location.href.split('#')[0]}#${slug}`
+      try {
+        await navigator.clipboard.writeText(url)
+        btn.classList.add('copied')
+        setTimeout(() => { btn.classList.remove('copied') }, 2000)
+      } catch {}
+    })
+  })
+
+  // Close share menu on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !shareMenu?.hidden) {
+      shareMenu.hidden = true
+    }
+  })
+
+  // Print / PDF
+  const btnPrint = document.getElementById('btn-print')
+  btnPrint?.addEventListener('click', () => {
+    window.print()
+  })
+
+  // Share menu
+  const btnShare = document.getElementById('btn-share')
+  const shareMenu = document.getElementById('share-menu')
+
+  btnShare?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    const isHidden = shareMenu?.hidden
+    if (shareMenu) {
+      shareMenu.hidden = !isHidden
+      // Position the menu below the button
+      const rect = btnShare.getBoundingClientRect()
+      shareMenu.style.top = `${rect.bottom + 8}px`
+      shareMenu.style.right = `${window.innerWidth - rect.right}px`
+    }
+  })
+
+  // Close share menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (shareMenu && !shareMenu.hidden && !shareMenu.contains(e.target) && e.target !== btnShare) {
+      shareMenu.hidden = true
+    }
+  })
+
+  // Share options
+  document.querySelectorAll('.share-option').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const shareType = btn.dataset.share
+      const url = window.location.href
+      const title = citation.titulo
+
+      switch (shareType) {
+        case 'twitter':
+          window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank')
+          break
+        case 'linkedin':
+          window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank')
+          break
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`, '_blank')
+          break
+        case 'copy':
+          try {
+            await navigator.clipboard.writeText(url)
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copiado!'
+            setTimeout(() => {
+              btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar enlace'
+            }, 2000)
+          } catch {}
+          break
+      }
+      shareMenu.hidden = true
+    })
+  })
+
+  // Bookmark functionality
+  const btnBookmark = document.getElementById('btn-bookmark')
+  const bookmarkText = document.getElementById('bookmark-text')
+  const iconOutline = btnBookmark?.querySelector('.icon-bookmark-outline')
+  const iconFilled = btnBookmark?.querySelector('.icon-bookmark-filled')
+
+  function getBookmarks() {
+    try {
+      return JSON.parse(localStorage.getItem('bookmarks') || '[]')
+    } catch { return [] }
+  }
+
+  function saveBookmarks(bookmarks) {
+    localStorage.setItem('bookmarks', JSON.stringify(bookmarks))
+  }
+
+  function isBookmarked() {
+    return getBookmarks().some(b => b.id === identificador)
+  }
+
+  function updateBookmarkUI() {
+    const bookmarked = isBookmarked()
+    if (iconOutline) iconOutline.style.display = bookmarked ? 'none' : 'block'
+    if (iconFilled) iconFilled.style.display = bookmarked ? 'block' : 'none'
+    if (bookmarkText) bookmarkText.textContent = bookmarked ? 'Guardado' : 'Guardar'
+    if (btnBookmark) btnBookmark.classList.toggle('bookmarked', bookmarked)
+  }
+
+  function toggleBookmark() {
+    const bookmarks = getBookmarks()
+    const existing = bookmarks.findIndex(b => b.id === identificador)
+    if (existing >= 0) {
+      bookmarks.splice(existing, 1)
+    } else {
+      bookmarks.unshift({
+        id: identificador,
+        titulo: citation.titulo,
+        rango: citation.rango,
+        fecha: citation.fechaPublicacion,
+        savedAt: new Date().toISOString()
+      })
+    }
+    saveBookmarks(bookmarks)
+    updateBookmarkUI()
+  }
+
+  btnBookmark?.addEventListener('click', toggleBookmark)
+  updateBookmarkUI()
+
+  // Recently viewed tracking
+  function trackRecentlyViewed() {
+    try {
+      const recent = JSON.parse(localStorage.getItem('recentlyViewed') || '[]')
+      const existing = recent.findIndex(r => r.id === identificador)
+      if (existing >= 0) recent.splice(existing, 1)
+      recent.unshift({
+        id: identificador,
+        titulo: citation.titulo,
+        rango: citation.rango,
+        fecha: citation.fechaPublicacion,
+        viewedAt: new Date().toISOString()
+      })
+      // Keep only last 20
+      localStorage.setItem('recentlyViewed', JSON.stringify(recent.slice(0, 20)))
+    } catch {}
+  }
+  trackRecentlyViewed()
+
+  // Search term highlighting
+  function highlightSearchTerms() {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const query = params.get('q')
+      if (!query || query.length < 2) return
+
+      const terms = query.toLowerCase().split(/\s+/).filter(t => t.length >= 2)
+      if (terms.length === 0) return
+
+      const content = document.querySelector('.prose')
+      if (!content) return
+
+      // Walk through text nodes and highlight matches
+      const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, null, false)
+      const nodesToProcess = []
+      let node
+      while (node = walker.nextNode()) {
+        if (node.textContent && node.parentNode?.nodeName !== 'SCRIPT') {
+          nodesToProcess.push(node)
+        }
+      }
+
+      for (const textNode of nodesToProcess) {
+        const text = textNode.textContent
+        const lower = text.toLowerCase()
+        let hasMatch = false
+        for (const term of terms) {
+          if (lower.includes(term)) { hasMatch = true; break }
+        }
+        if (!hasMatch) continue
+
+        // Create regex pattern for all terms
+        const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+        const regex = new RegExp(`(${pattern})`, 'gi')
+        const parts = text.split(regex)
+        if (parts.length === 1) continue
+
+        const fragment = document.createDocumentFragment()
+        for (const part of parts) {
+          if (terms.some(t => part.toLowerCase() === t)) {
+            const mark = document.createElement('mark')
+            mark.className = 'search-highlight'
+            mark.textContent = part
+            fragment.appendChild(mark)
+          } else {
+            fragment.appendChild(document.createTextNode(part))
+          }
+        }
+        textNode.parentNode?.replaceChild(fragment, textNode)
+      }
+
+      // Scroll to first highlight
+      const firstHighlight = document.querySelector('.search-highlight')
+      if (firstHighlight) {
+        setTimeout(() => {
+          firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+      }
+    } catch {}
+  }
+  highlightSearchTerms()
+
+  // Version History
+  const toggleBtn = document.getElementById('history-toggle')
+  const content = document.getElementById('history-content')
+  const historyList = document.getElementById('history-list')
+  const countSpan = document.getElementById('history-count')
+  let loaded = false
+
+  // Load history count on page load
+  async function loadHistoryCount() {
+    try {
+      const res = await fetch(`/api/normas/${identificador}/history`)
+      const { data } = await res.json()
+      if (data && data.length > 0) {
+        countSpan.textContent = data.length
+        countSpan.classList.add('visible')
+      }
+    } catch {}
+  }
+  loadHistoryCount()
+
+  toggleBtn?.addEventListener('click', async () => {
+    const isHidden = content.hidden
+    content.hidden = !isHidden
+    content.setAttribute('aria-hidden', String(!isHidden))
+    toggleBtn.setAttribute('aria-expanded', String(isHidden))
+    toggleBtn.classList.toggle('expanded', isHidden)
+
+    if (isHidden && !loaded) {
+      historyList.innerHTML = '<p class="loading">Cargando historial...</p>'
+      try {
+        const res = await fetch(`/api/normas/${identificador}/history`)
+        const { data } = await res.json()
+        loaded = true
+
+        if (!data || data.length === 0) {
+          historyList.innerHTML = `
+            <div class="empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <p>Esta norma aún no tiene historial de cambios registrados.</p>
+              <span class="empty-hint">El historial se genera cuando se registran modificaciones oficiales.</span>
+            </div>
+          `
+          return
+        }
+
+        const latestHash = data[0].hash
+        historyList.innerHTML = data.map((commit, i) => {
+          const dateStr = new Date(commit.authorDate).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' })
+          return `
+          <div class="history-item">
+            <div class="commit-info">
+              <span class="commit-date">${dateStr}</span>
+              <span class="commit-message">${commit.subject}</span>
+            </div>
+            <div class="commit-actions">
+              <a href="/leyes/${identificador}/version/${commit.hash}" class="btn-small" aria-label="Ver version del ${dateStr}">Ver</a>
+              ${i < data.length - 1 ? `
+                <a href="/leyes/${identificador}/diff?from=${data[i+1].hash}&to=${commit.hash}" class="btn-small btn-outline" title="Comparar con version anterior">Comparar</a>
+              ` : '<span class="btn-small btn-disabled" title="Version inicial">Inicial</span>'}
+            </div>
+          </div>
+        `}).join('')
+
+      } catch (err) {
+        historyList.innerHTML = `
+          <div class="error-state">
+            <p>Error al cargar el historial</p>
+            <button onclick="location.reload()" class="btn-small">Reintentar</button>
+          </div>
+        `
+      }
+    }
+  })
+</script>
+
+<style>
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb span:not(:last-child) {
+    color: var(--color-border);
+  }
+
+  .page-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .page-header {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .meta-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .badge-rango {
+    background: #27272a;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+  }
+
+  .badge-vigente {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #ffffff;
+  }
+
+  .ocr-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: 8px;
+    color: #eab308;
+  }
+
+  .ocr-warning svg {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .ocr-warning strong {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .ocr-warning p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  .meta-grid {
+    display: flex;
+    gap: 1.5rem 2rem;
+    flex-wrap: wrap;
+  }
+
+  .meta-grid div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .meta-grid dt {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .meta-grid dd {
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .btn-primary:hover {
+    background: #cccccc;
+  }
+
+  .btn-secondary {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-border);
+  }
+
+  /* Table of Contents */
+  .toc {
+    margin-bottom: 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-secondary);
+  }
+
+  .toc-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .toc-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .toc-toggle svg {
+    color: var(--color-text-muted);
+  }
+
+  .toc-list {
+    margin: 0;
+    padding: 0 1rem 1rem 2.5rem;
+    list-style: decimal;
+  }
+
+  .toc-item {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .toc-item a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .toc-item a:hover {
+    color: var(--color-accent);
+  }
+
+  .toc-level-3 {
+    margin-left: 1rem;
+    list-style-type: lower-alpha;
+  }
+
+  .toc-level-4 {
+    margin-left: 2rem;
+    list-style-type: lower-roman;
+  }
+
+  .content-box {
+    border-top: 1px solid var(--color-border);
+    padding-top: 2rem;
+  }
+
+  .prose {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--color-text);
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+
+  .prose :global(h1),
+  .prose :global(h2),
+  .prose :global(h3),
+  .prose :global(h4),
+  .prose :global(h5),
+  .prose :global(h6) {
+    text-align: left;
+    hyphens: none;
+    scroll-margin-top: 2rem;
+  }
+
+  .prose :global(h1:target),
+  .prose :global(h2:target),
+  .prose :global(h3:target),
+  .prose :global(h4:target) {
+    animation: highlight 2s ease-out;
+  }
+
+  @keyframes highlight {
+    0% { background: rgba(255, 255, 255, 0.1); }
+    100% { background: transparent; }
+  }
+
+  .prose :global(h1) {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .prose :global(h2) {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .prose :global(h3) {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.5rem;
+  }
+
+  .prose :global(h4),
+  .prose :global(h5),
+  .prose :global(h6) {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.25rem 0 0.5rem;
+  }
+
+  .prose :global(p) {
+    margin: 0.75rem 0;
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+    text-align: left;
+  }
+
+  .prose :global(li) {
+    margin: 0.5rem 0;
+    padding-left: 0.25rem;
+  }
+
+  .prose :global(li::marker) {
+    color: var(--color-text-muted);
+  }
+
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+
+  .prose :global(th),
+  .prose :global(td) {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  .prose :global(th) {
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+  }
+
+  .prose :global(blockquote) {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  .prose :global(strong) {
+    font-weight: 600;
+  }
+
+  .prose :global(em) {
+    font-style: italic;
+  }
+
+  .prose :global(a) {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .prose :global(hr) {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 2rem 0;
+  }
+
+  /* Legal document specific styles */
+  .prose :global(p:has(strong:first-child)) {
+    margin-top: 1.5rem;
+  }
+
+  /* Version History */
+  .version-history {
+    margin-bottom: 2rem;
+  }
+
+  .history-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .history-toggle-btn:hover {
+    background: var(--color-border);
+  }
+
+  .history-toggle-btn .chevron {
+    margin-left: auto;
+    transition: transform 0.2s;
+  }
+
+  .history-toggle-btn.expanded .chevron {
+    transform: rotate(180deg);
+  }
+
+  .history-icon {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  .history-count-badge {
+    display: none;
+    background: var(--color-accent);
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+
+  .history-count-badge.visible {
+    display: inline-block;
+  }
+
+  .history-content {
+    margin-top: 1rem;
+  }
+
+  #history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .history-item:hover {
+    background: #27272a;
+  }
+
+  .commit-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .commit-date {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  .commit-message {
+    font-size: 0.9rem;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .commit-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .btn-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: #ffffff;
+    color: #000000;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+
+  .btn-small:hover {
+    background: #cccccc;
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-outline:hover {
+    background: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .loading {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+  }
+
+  .empty-state,
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+  }
+
+  .empty-state svg {
+    opacity: 0.5;
+  }
+
+  .empty-state p,
+  .error-state p {
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .empty-hint {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+
+  .error-state {
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .error-state p {
+    color: #ef4444;
+  }
+
+  .btn-disabled {
+    background: transparent;
+    color: var(--color-text-muted);
+    border: 1px dashed var(--color-border);
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  /* Citation Modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .modal[hidden] {
+    display: none;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 550px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .modal-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .modal-close:hover {
+    background: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .modal-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .citation-format label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .citation-box {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .citation-box code {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .btn-copy-cite {
+    flex-shrink: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-copy-cite:hover {
+    background: var(--color-border);
+  }
+
+  /* Heading link buttons */
+  .prose :global(.heading-link) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 0.5rem;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    vertical-align: middle;
+  }
+
+  .prose :global(h1:hover .heading-link),
+  .prose :global(h2:hover .heading-link),
+  .prose :global(h3:hover .heading-link),
+  .prose :global(h4:hover .heading-link) {
+    opacity: 1;
+  }
+
+  .prose :global(.heading-link:hover) {
+    background: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .prose :global(.heading-link.copied) {
+    color: #22c55e;
+    opacity: 1;
+  }
+
+  .prose :global(.heading-link.copied::after) {
+    content: '!';
+    position: absolute;
+    font-size: 0.6rem;
+    font-weight: bold;
+  }
+
+  /* Action buttons with icons */
+  .btn svg {
+    flex-shrink: 0;
+  }
+
+  .btn-text {
+    margin-left: 0.25rem;
+  }
+
+  /* Bookmark button states */
+  #btn-bookmark.bookmarked {
+    background: #22c55e;
+    color: #000;
+  }
+
+  #btn-bookmark.bookmarked:hover {
+    background: #16a34a;
+  }
+
+  [data-theme="light"] #btn-bookmark.bookmarked {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  /* Search term highlighting */
+  .prose :global(.search-highlight) {
+    background: rgba(234, 179, 8, 0.3);
+    color: inherit;
+    padding: 0.1em 0.2em;
+    border-radius: 2px;
+    scroll-margin-top: 100px;
+  }
+
+  [data-theme="light"] .prose :global(.search-highlight) {
+    background: rgba(234, 179, 8, 0.4);
+  }
+
+  /* Share menu */
+  .share-menu {
+    position: fixed;
+    z-index: 60;
+    min-width: 180px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .share-menu[hidden] {
+    display: none;
+  }
+
+  .share-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: left;
+  }
+
+  .share-option:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  .share-option svg {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+  }
+
+  /* Related Laws Section */
+  .related-laws {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .related-laws h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--color-text);
+  }
+
+  .related-laws-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .related-law-item {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    transition: all 0.2s;
+  }
+
+  .related-law-item:hover {
+    background: #27272a;
+    border-color: var(--color-accent);
+  }
+
+  .related-law-link {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 0.5rem;
+  }
+
+  .related-law-title {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text);
+    line-height: 1.5;
+  }
+
+  .related-law-item:hover .related-law-title {
+    color: var(--color-accent);
+  }
+
+  .related-law-rango {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  .related-law-materias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .materia-tag {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  /* Print styles */
+  @media print {
+    .action-buttons,
+    .version-history,
+    .toc,
+    .breadcrumb,
+    .share-menu,
+    .modal,
+    .related-laws {
+      display: none !important;
+    }
+
+    .page-top {
+      margin-bottom: 1rem;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 0;
+    }
+
+    .prose {
+      font-size: 11pt;
+      line-height: 1.6;
+      text-align: justify;
+    }
+
+    .prose :global(.heading-link) {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .page-top {
+      flex-direction: column;
+    }
+
+    .action-buttons {
+      flex-direction: row;
+      width: 100%;
+    }
+
+    .btn {
+      flex: 1;
+      font-size: 0.8rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .history-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .commit-info {
+      width: 100%;
+    }
+
+    .commit-actions {
+      width: 100%;
+    }
+
+    .btn-small {
+      flex: 1;
+    }
+
+    .prose :global(.heading-link) {
+      opacity: 0.5;
+    }
+
+    .modal-content {
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .related-law-link {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .related-law-rango {
+      align-self: flex-start;
+    }
+  }
+</style>

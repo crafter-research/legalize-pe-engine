@@ -1,0 +1,35 @@
+---
+export const prerender = true
+
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title="404 — Legalize PE">
+  <main>
+    <div class="container">
+      <h1>404</h1>
+      <p>Norma no encontrada.</p>
+      <a href="/">Volver al inicio</a>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 8rem 1.5rem;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+  }
+</style>

@@ -1,0 +1,795 @@
+---
+export const prerender = true
+
+import Layout from '../layouts/Layout.astro'
+import { RANGO_LABELS } from '../lib/constants'
+
+const exampleQueries = [
+  { text: 'Despido injustificado' },
+  { text: 'Derechos del inquilino' },
+  { text: 'CTS no pagada' },
+  { text: 'Contratación pública' },
+  { text: 'Divorcio' },
+  { text: 'Pensión de alimentos' },
+]
+
+const rangoLabelsJson = JSON.stringify(RANGO_LABELS)
+---
+
+<Layout
+  title="Consulta Legal — Legalize PE"
+  description="Describe tu situación legal en lenguaje natural y encuentra las normas relevantes del ordenamiento jurídico peruano."
+>
+  <main id="main-content">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Navegación de ruta">
+        <a href="/">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Consulta Legal</span>
+      </nav>
+
+      <header class="page-header">
+        <h1>Consulta Legal Inteligente</h1>
+        <p class="subtitle">
+          Describe tu situación legal en lenguaje natural y te mostraremos las normas relevantes.
+        </p>
+      </header>
+
+      <section class="search-section">
+        <div class="query-box">
+          <label for="legal-query" class="sr-only">Describe tu consulta legal</label>
+          <textarea
+            id="legal-query"
+            placeholder="Ejemplo: Mi empleador no me pagó mi CTS, ¿qué puedo hacer?…"
+            rows="3"
+            aria-label="Describe tu consulta legal"
+            aria-describedby="query-error"
+            aria-invalid="false"
+          ></textarea>
+          <div id="query-error" class="query-error" role="alert" aria-live="polite" style="display: none;"></div>
+          <div class="query-actions">
+            <button type="button" id="clear-query" class="btn-secondary" disabled>
+              Limpiar
+            </button>
+            <button type="button" id="search-query" class="btn-primary" disabled>
+              Buscar normas relevantes
+            </button>
+          </div>
+        </div>
+
+        <div class="examples">
+          <p class="examples-title">Ejemplos de consultas:</p>
+          <div class="examples-grid">
+            {exampleQueries.map((example) => (
+              <button
+                type="button"
+                class="example-chip"
+                data-query={example.text}
+                aria-label={`Ejemplo: ${example.text}`}
+              >
+                {example.text}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div id="search-status" class="search-status" role="status" aria-live="polite"></div>
+
+        <div id="results-container" class="results-container" style="display: none;">
+          <div class="results-header">
+            <h2 id="results-title">Normas relevantes</h2>
+            <p id="results-subtitle" class="results-subtitle"></p>
+          </div>
+          <div id="results-list" class="results-list"></div>
+        </div>
+
+        <div id="no-results" class="no-results" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <p>No se encontraron normas relevantes para tu consulta.</p>
+          <p class="no-results-hint">Intenta reformular tu pregunta o usa términos más específicos.</p>
+        </div>
+      </section>
+
+      <section class="info-section">
+        <div class="info-card">
+          <h3>¿Cómo funciona?</h3>
+          <ol>
+            <li>Describe tu situación o pregunta legal en lenguaje natural</li>
+            <li>Nuestro sistema identifica palabras clave y conceptos legales relevantes</li>
+            <li>Buscamos en todas las normas peruanas para encontrar las más aplicables</li>
+            <li>Te mostramos los resultados ordenados por relevancia con explicaciones</li>
+          </ol>
+        </div>
+
+        <div class="info-card">
+          <h3>Importante</h3>
+          <p>
+            Esta herramienta es una guía informativa. Para asesoría legal específica,
+            consulta con un abogado profesional.
+          </p>
+          <p>
+            Las normas mostradas son referenciales. Verifica siempre la vigencia y
+            aplicabilidad en el <a href="https://www.gob.pe/spij" target="_blank" rel="noopener">Sistema Peruano de Información Jurídica (SPIJ)</a>.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    padding: 1.5rem 0 0.5rem;
+  }
+
+  .breadcrumb a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-text);
+  }
+
+  /* Header */
+  .page-header {
+    padding: 1.5rem 0 2rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Search Section */
+  .search-section {
+    margin-bottom: 3rem;
+  }
+
+  .query-box {
+    margin-bottom: 1.5rem;
+  }
+
+  .query-box textarea {
+    width: 100%;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1rem;
+    color: var(--color-text);
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 100px;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .query-box textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  }
+
+  .query-box textarea::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .query-box textarea[aria-invalid="true"] {
+    border-color: #ef4444;
+  }
+
+  .query-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid #ef4444;
+    border-radius: 4px;
+  }
+
+  .query-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #e5e5e5;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    border-color: #555;
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Examples */
+  .examples {
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-secondary);
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+  }
+
+  .examples-title {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.625rem;
+  }
+
+  .examples-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .example-chip {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.375rem 0.75rem;
+    text-align: left;
+    color: var(--color-text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .example-chip:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #000;
+  }
+
+  /* Search Status */
+  .search-status {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+  }
+
+  .search-status.loading::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  /* Results */
+  .results-container {
+    margin-top: 2rem;
+  }
+
+  .results-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .results-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .results-subtitle {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+  }
+
+  .results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .result-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: border-color 0.15s;
+  }
+
+  .result-card:hover {
+    border-color: var(--color-accent);
+  }
+
+  .result-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .result-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .result-badge {
+    display: inline-block;
+    padding: 0.25em 0.65em;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: #1a1a1a;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+  }
+
+  .result-date {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .result-score {
+    font-size: 0.75rem;
+    color: #10b981;
+    font-weight: 600;
+  }
+
+  .result-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .result-title a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .result-title a:hover {
+    color: #fff;
+  }
+
+  .result-reasons {
+    background: var(--color-bg);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .result-reasons-title {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .result-reasons ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .result-reasons li {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .result-reasons li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #10b981;
+  }
+
+  .result-preview {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .result-materias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .materia-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background: #1a1a1a;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    color: var(--color-text-muted);
+  }
+
+  /* No Results */
+  .no-results {
+    text-align: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .no-results svg {
+    color: var(--color-text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .no-results p {
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .no-results-hint {
+    font-size: 0.9rem;
+  }
+
+  /* Info Section */
+  .info-section {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .info-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+
+  .info-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .info-card ol {
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+
+  .info-card li {
+    margin-bottom: 0.375rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    font-size: 0.875rem;
+  }
+
+  .info-card p {
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .info-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-card a {
+    color: var(--color-text);
+    text-decoration: underline;
+    text-decoration-color: var(--color-border);
+  }
+
+  .info-card a:hover {
+    text-decoration-color: var(--color-text);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    .container {
+      padding: 0 1rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.75rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+    }
+
+    .query-box {
+      padding: 1rem;
+    }
+
+    .query-actions {
+      flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      width: 100%;
+    }
+
+    .examples-grid {
+      gap: 0.5rem;
+    }
+
+    .result-card {
+      padding: 1rem;
+    }
+
+    .result-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .info-section {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (min-width: 641px) {
+    .info-section {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+
+<script is:inline define:vars={{ rangoLabelsJson }}>
+  const rangoLabels = JSON.parse(rangoLabelsJson)
+
+  const queryTextarea = document.getElementById('legal-query')
+  const searchBtn = document.getElementById('search-query')
+  const clearBtn = document.getElementById('clear-query')
+  const exampleChips = document.querySelectorAll('.example-chip')
+  const statusDiv = document.getElementById('search-status')
+  const resultsContainer = document.getElementById('results-container')
+  const resultsList = document.getElementById('results-list')
+  const noResultsDiv = document.getElementById('no-results')
+  const resultsTitle = document.getElementById('results-title')
+  const resultsSubtitle = document.getElementById('results-subtitle')
+  const queryError = document.getElementById('query-error')
+
+  // Enable/disable buttons based on textarea content
+  queryTextarea.addEventListener('input', () => {
+    const hasText = queryTextarea.value.trim().length > 0
+    searchBtn.disabled = !hasText
+    clearBtn.disabled = !hasText
+
+    // Clear error when user types
+    if (queryError && queryError.style.display !== 'none') {
+      queryError.style.display = 'none'
+      queryTextarea.setAttribute('aria-invalid', 'false')
+    }
+  })
+
+  // Clear query
+  clearBtn.addEventListener('click', () => {
+    queryTextarea.value = ''
+    searchBtn.disabled = true
+    clearBtn.disabled = true
+    hideResults()
+    queryTextarea.focus()
+  })
+
+  // Example chips
+  exampleChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const query = chip.dataset.query
+      queryTextarea.value = query
+      searchBtn.disabled = false
+      clearBtn.disabled = false
+      queryTextarea.focus()
+      // Auto-search after setting example
+      performSearch(query)
+    })
+  })
+
+  // Search button
+  searchBtn.addEventListener('click', () => {
+    const query = queryTextarea.value.trim()
+    if (query) {
+      if (query.length < 10) {
+        queryError.textContent = 'Por favor, ingresa al menos 10 caracteres para realizar una búsqueda efectiva.'
+        queryError.style.display = 'block'
+        queryTextarea.setAttribute('aria-invalid', 'true')
+        return
+      }
+      performSearch(query)
+    }
+  })
+
+  // Enter key to search (Ctrl/Cmd + Enter)
+  queryTextarea.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault()
+      const query = queryTextarea.value.trim()
+      if (query) {
+        if (query.length < 10) {
+          queryError.textContent = 'Por favor, ingresa al menos 10 caracteres para realizar una búsqueda efectiva.'
+          queryError.style.display = 'block'
+          queryTextarea.setAttribute('aria-invalid', 'true')
+          return
+        }
+        performSearch(query)
+      }
+    }
+  })
+
+  async function performSearch(query) {
+    showLoading()
+
+    try {
+      const response = await fetch('/api/search/smart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Error en la búsqueda')
+      }
+
+      const data = await response.json()
+      displayResults(data)
+    } catch (error) {
+      console.error('Search error:', error)
+      statusDiv.textContent = 'Error al realizar la búsqueda. Inténtalo nuevamente.'
+      statusDiv.className = 'search-status error'
+    }
+  }
+
+  function showLoading() {
+    statusDiv.textContent = 'Buscando normas relevantes'
+    statusDiv.className = 'search-status loading'
+    statusDiv.style.display = 'block'
+    resultsContainer.style.display = 'none'
+    noResultsDiv.style.display = 'none'
+  }
+
+  function hideResults() {
+    statusDiv.style.display = 'none'
+    resultsContainer.style.display = 'none'
+    noResultsDiv.style.display = 'none'
+  }
+
+  function displayResults(data) {
+    statusDiv.style.display = 'none'
+
+    if (data.results.length === 0) {
+      noResultsDiv.style.display = 'block'
+      resultsContainer.style.display = 'none'
+      return
+    }
+
+    noResultsDiv.style.display = 'none'
+    resultsContainer.style.display = 'block'
+
+    resultsTitle.textContent = `Se encontraron ${data.totalResults} norma${data.totalResults === 1 ? '' : 's'} relevante${data.totalResults === 1 ? '' : 's'}`
+    resultsSubtitle.textContent = `Ordenadas por relevancia según tu consulta`
+
+    resultsList.innerHTML = data.results.map(result => {
+      const rangoLabel = rangoLabels[result.rango] || result.rango
+      const fecha = result.fechaPublicacion ? new Date(result.fechaPublicacion).toLocaleDateString('es-PE') : ''
+
+      return `
+        <article class="result-card">
+          <div class="result-header">
+            <div class="result-meta">
+              <span class="result-badge">${rangoLabel}</span>
+              ${fecha ? `<span class="result-date">${fecha}</span>` : ''}
+            </div>
+            <span class="result-score">Relevancia: ${Math.round(result.score)}</span>
+          </div>
+
+          <h3 class="result-title">
+            <a href="/leyes/${result.id}">${result.titulo}</a>
+          </h3>
+
+          ${result.matchReasons.length > 0 ? `
+            <div class="result-reasons">
+              <div class="result-reasons-title">Por qué es relevante:</div>
+              <ul>
+                ${result.matchReasons.slice(0, 3).map(reason => `<li>${reason}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${result.bodyPreview ? `
+            <p class="result-preview">${result.bodyPreview}</p>
+          ` : ''}
+
+          ${result.materias.length > 0 ? `
+            <div class="result-materias">
+              ${result.materias.map(materia => `<span class="materia-tag">${materia}</span>`).join('')}
+            </div>
+          ` : ''}
+        </article>
+      `
+    }).join('')
+
+    // Scroll to results
+    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+</script>

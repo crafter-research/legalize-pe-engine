@@ -1,0 +1,600 @@
+---
+import Layout from '../../../layouts/Layout.astro'
+
+export const prerender = false
+
+const { id } = Astro.params
+const url = new URL(Astro.request.url)
+const fromHash = url.searchParams.get('from')
+const toHash = url.searchParams.get('to')
+
+if (!id || !fromHash || !toHash) {
+  return Astro.redirect(`/leyes/${id}`)
+}
+
+interface CompareData {
+  from: {
+    hash: string
+    date: string
+    subject: string
+    lines: string[]
+  }
+  to: {
+    hash: string
+    date: string
+    subject: string
+    lines: string[]
+  }
+}
+
+let data: CompareData | null = null
+let error = ''
+
+try {
+  const res = await fetch(
+    `${Astro.url.origin}/api/normas/${id}/compare?from=${fromHash}&to=${toHash}`,
+  )
+  if (!res.ok) {
+    throw new Error('Failed to fetch compare data')
+  }
+  const json = await res.json()
+  data = json.data
+} catch (e) {
+  error = 'No se pudo cargar la comparacion'
+}
+
+const fromDate = data?.from.date
+  ? new Date(data.from.date).toLocaleDateString('es-PE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : ''
+const toDate = data?.to.date
+  ? new Date(data.to.date).toLocaleDateString('es-PE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : ''
+---
+
+<Layout title={`Comparar versiones — ${id}`}>
+  <main id="main-content">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Navegacion de ruta">
+        <a href="/">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <a href="/leyes">Normas</a>
+        <span aria-hidden="true">/</span>
+        <a href={`/leyes/${id}`}>{id}</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Comparar lado a lado</span>
+      </nav>
+
+      {
+        error ? (
+          <div class="error-box">
+            <p>{error}</p>
+            <a href={`/leyes/${id}`} class="btn btn-primary">
+              Volver a la norma
+            </a>
+          </div>
+        ) : (
+          data && (
+            <>
+              <div class="compare-header">
+                <div class="compare-title-row">
+                  <h1>Comparar versiones</h1>
+                </div>
+                <div class="compare-meta">
+                  <span class="version-info">{fromHash.slice(0, 7)} <span class="version-date">({fromDate})</span></span>
+                  <span class="arrow">→</span>
+                  <span class="version-info">{toHash.slice(0, 7)} <span class="version-date">({toDate})</span></span>
+                </div>
+                <div class="view-toggle">
+                  <a href={`/leyes/${id}/diff?from=${fromHash}&to=${toHash}`} class="toggle-tab">Unificado</a>
+                  <span class="toggle-tab active">Lado a lado</span>
+                </div>
+              </div>
+
+              <div
+                class="compare-container"
+                id="compare-container"
+                data-from={JSON.stringify(data.from.lines)}
+                data-to={JSON.stringify(data.to.lines)}
+              >
+                <div class="loading-state">
+                  <svg
+                    class="spinner"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  <span>Procesando comparacion...</span>
+                </div>
+              </div>
+
+            </>
+          )
+        )
+      }
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Simple diff algorithm (Myers-like for line comparison)
+  function computeLCS(
+    a: string[],
+    b: string[],
+  ): Map<number, number> {
+    const m = a.length
+    const n = b.length
+    const dp: number[][] = Array(m + 1)
+      .fill(null)
+      .map(() => Array(n + 1).fill(0))
+
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (a[i - 1] === b[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+        }
+      }
+    }
+
+    // Backtrack to find matching pairs
+    const matches = new Map<number, number>()
+    let i = m
+    let j = n
+    while (i > 0 && j > 0) {
+      if (a[i - 1] === b[j - 1]) {
+        matches.set(i - 1, j - 1)
+        i--
+        j--
+      } else if (dp[i - 1][j] > dp[i][j - 1]) {
+        i--
+      } else {
+        j--
+      }
+    }
+    return matches
+  }
+
+  interface DiffLine {
+    type: 'same' | 'del' | 'add' | 'change'
+    fromLine?: number
+    toLine?: number
+    fromContent?: string
+    toContent?: string
+  }
+
+  function computeSideBySideDiff(
+    fromLines: string[],
+    toLines: string[],
+  ): DiffLine[] {
+    const matches = computeLCS(fromLines, toLines)
+    const result: DiffLine[] = []
+
+    let fi = 0
+    let ti = 0
+
+    // Sort matches by from index
+    const sortedMatches = [...matches.entries()].sort((a, b) => a[0] - b[0])
+    let matchIdx = 0
+
+    while (fi < fromLines.length || ti < toLines.length) {
+      // Check if current position is a match
+      if (matchIdx < sortedMatches.length) {
+        const [fromMatch, toMatch] = sortedMatches[matchIdx]
+
+        // Process deletions before match
+        while (fi < fromMatch) {
+          // Check if there's an addition we can pair with
+          if (ti < toMatch) {
+            result.push({
+              type: 'change',
+              fromLine: fi,
+              toLine: ti,
+              fromContent: fromLines[fi],
+              toContent: toLines[ti],
+            })
+            fi++
+            ti++
+          } else {
+            result.push({
+              type: 'del',
+              fromLine: fi,
+              fromContent: fromLines[fi],
+            })
+            fi++
+          }
+        }
+
+        // Process additions before match
+        while (ti < toMatch) {
+          result.push({
+            type: 'add',
+            toLine: ti,
+            toContent: toLines[ti],
+          })
+          ti++
+        }
+
+        // Process the match
+        result.push({
+          type: 'same',
+          fromLine: fi,
+          toLine: ti,
+          fromContent: fromLines[fi],
+          toContent: toLines[ti],
+        })
+        fi++
+        ti++
+        matchIdx++
+      } else {
+        // No more matches, process remaining lines
+        if (fi < fromLines.length && ti < toLines.length) {
+          result.push({
+            type: 'change',
+            fromLine: fi,
+            toLine: ti,
+            fromContent: fromLines[fi],
+            toContent: toLines[ti],
+          })
+          fi++
+          ti++
+        } else if (fi < fromLines.length) {
+          result.push({
+            type: 'del',
+            fromLine: fi,
+            fromContent: fromLines[fi],
+          })
+          fi++
+        } else if (ti < toLines.length) {
+          result.push({
+            type: 'add',
+            toLine: ti,
+            toContent: toLines[ti],
+          })
+          ti++
+        }
+      }
+    }
+
+    return result
+  }
+
+  function escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+  }
+
+  function renderDiff(diffLines: DiffLine[]): string {
+    let html = '<div class="compare-scroll"><div class="compare-columns">'
+    html += '<div class="column column-from"><div class="column-lines">'
+
+    // From column
+    for (const line of diffLines) {
+      if (line.type === 'same') {
+        html += `<div class="line line-same"><span class="line-num">${(line.fromLine ?? 0) + 1}</span><span class="line-content">${escapeHtml(line.fromContent || '')}</span></div>`
+      } else if (line.type === 'del') {
+        html += `<div class="line line-del"><span class="line-num">${(line.fromLine ?? 0) + 1}</span><span class="line-content">${escapeHtml(line.fromContent || '')}</span></div>`
+      } else if (line.type === 'change') {
+        html += `<div class="line line-change"><span class="line-num">${(line.fromLine ?? 0) + 1}</span><span class="line-content">${escapeHtml(line.fromContent || '')}</span></div>`
+      } else if (line.type === 'add') {
+        html += `<div class="line line-empty"><span class="line-num"></span><span class="line-content"></span></div>`
+      }
+    }
+
+    html += '</div></div>'
+    html += '<div class="column column-to"><div class="column-lines">'
+
+    // To column
+    for (const line of diffLines) {
+      if (line.type === 'same') {
+        html += `<div class="line line-same"><span class="line-num">${(line.toLine ?? 0) + 1}</span><span class="line-content">${escapeHtml(line.toContent || '')}</span></div>`
+      } else if (line.type === 'add') {
+        html += `<div class="line line-add"><span class="line-num">${(line.toLine ?? 0) + 1}</span><span class="line-content">${escapeHtml(line.toContent || '')}</span></div>`
+      } else if (line.type === 'change') {
+        html += `<div class="line line-change"><span class="line-num">${(line.toLine ?? 0) + 1}</span><span class="line-content">${escapeHtml(line.toContent || '')}</span></div>`
+      } else if (line.type === 'del') {
+        html += `<div class="line line-empty"><span class="line-num"></span><span class="line-content"></span></div>`
+      }
+    }
+
+    html += '</div></div></div></div>'
+    return html
+  }
+
+  // Synchronized scrolling
+  function setupSyncScroll() {
+    const columns = document.querySelectorAll('.column-lines')
+    if (columns.length !== 2) return
+
+    let isScrolling = false
+
+    columns.forEach((column, index) => {
+      column.addEventListener('scroll', () => {
+        if (isScrolling) return
+        isScrolling = true
+
+        const other = columns[index === 0 ? 1 : 0] as HTMLElement
+        other.scrollTop = (column as HTMLElement).scrollTop
+
+        requestAnimationFrame(() => {
+          isScrolling = false
+        })
+      })
+    })
+  }
+
+  // Main
+  const container = document.getElementById('compare-container')
+  if (container) {
+    const fromLines = JSON.parse(container.dataset.from || '[]')
+    const toLines = JSON.parse(container.dataset.to || '[]')
+
+    // Use setTimeout to allow rendering of loading state
+    setTimeout(() => {
+      const diffLines = computeSideBySideDiff(fromLines, toLines)
+      container.innerHTML = renderDiff(diffLines)
+      setupSyncScroll()
+    }, 50)
+  }
+</script>
+
+<style>
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .compare-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .compare-title-row {
+    margin-bottom: 0.5rem;
+  }
+
+  .compare-header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .compare-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .version-info {
+    color: var(--color-text);
+  }
+
+  .version-date {
+    color: var(--color-text-muted);
+  }
+
+  .arrow {
+    color: var(--color-text-muted);
+  }
+
+  .view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .toggle-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: all 0.15s;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .toggle-tab:last-child {
+    border-right: none;
+  }
+
+  .toggle-tab:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+  }
+
+  .toggle-tab.active {
+    background: var(--color-accent);
+    color: #000;
+  }
+
+  .compare-container {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 400px;
+    max-height: 70vh;
+  }
+
+  .loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 3rem;
+    color: var(--color-text-muted);
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .compare-scroll {
+    height: 100%;
+    max-height: 70vh;
+    overflow: hidden;
+  }
+
+  .compare-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    height: 100%;
+  }
+
+  .column {
+    border-right: 1px solid var(--color-border);
+    overflow: hidden;
+  }
+
+  .column:last-child {
+    border-right: none;
+  }
+
+  .column-lines {
+    height: 100%;
+    max-height: 70vh;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .line {
+    display: flex;
+    min-height: 1.5em;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .line-num {
+    width: 3rem;
+    padding: 0 0.5rem;
+    text-align: right;
+    color: var(--color-text-muted);
+    user-select: none;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.2);
+    border-right: 1px solid var(--color-border);
+  }
+
+  .line-content {
+    flex: 1;
+    padding: 0 0.5rem;
+  }
+
+  .line-same {
+    background: var(--color-bg);
+  }
+
+  .line-del {
+    background: rgba(239, 68, 68, 0.15);
+  }
+
+  .line-del .line-content {
+    text-decoration: line-through;
+    text-decoration-color: rgba(239, 68, 68, 0.5);
+  }
+
+  .line-add {
+    background: rgba(34, 197, 94, 0.15);
+  }
+
+  .line-change {
+    background: rgba(234, 179, 8, 0.15);
+  }
+
+  .line-empty {
+    background: rgba(128, 128, 128, 0.1);
+  }
+
+  .line-empty .line-num {
+    background: rgba(128, 128, 128, 0.1);
+  }
+
+  .error-box {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .error-box p {
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .error-box .btn {
+    display: inline-flex;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    background: #ffffff;
+    color: #000000;
+    text-decoration: none;
+  }
+
+  @media (max-width: 900px) {
+    .compare-columns {
+      grid-template-columns: 1fr;
+    }
+
+    .column {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .column:last-child {
+      border-bottom: none;
+    }
+
+    .column-lines {
+      max-height: 35vh;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .container {
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .compare-meta {
+      flex-wrap: wrap;
+    }
+  }
+</style>

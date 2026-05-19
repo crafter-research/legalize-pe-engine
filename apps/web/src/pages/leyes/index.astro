@@ -1,0 +1,1306 @@
+---
+export const prerender = true
+
+import Layout from '../../layouts/Layout.astro'
+import { RANGO_LABELS_FULL } from '../../lib/constants'
+
+const rangoLabelsJson = JSON.stringify(RANGO_LABELS_FULL)
+---
+
+<Layout title="Normas — Legalize PE" description="Busca y explora la legislacion peruana con busqueda inteligente. Encuentra leyes, decretos legislativos, decretos supremos y mas.">
+  <main id="main-content">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Navegacion de ruta">
+        <a href="/">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Normas</span>
+      </nav>
+
+      <header class="page-header">
+        <h1>Buscar normas legales</h1>
+        <p class="subtitle" id="subtitle-text">
+          Explora la legislacion peruana. Busqueda por titulo, numero y contenido.
+        </p>
+      </header>
+
+      <section class="search-section" role="search" aria-label="Buscar normas legales">
+        <div class="search-box">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <input
+            type="search"
+            id="search-input"
+            placeholder="Busca por título, número, artículo o contenido…"
+            autocomplete="off"
+            aria-label="Buscar normas legales"
+          />
+          <button type="button" id="clear-search" class="clear-btn" aria-label="Limpiar busqueda" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <fieldset class="filters">
+          <legend class="sr-only">Filtrar normas por tipo, estado, materia y fecha</legend>
+          <div class="filter-group">
+            <label for="filter-tipo">Tipo</label>
+            <select id="filter-tipo">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-estado">Estado</label>
+            <select id="filter-estado">
+              <option value="">Todos</option>
+              <option value="vigente">Vigente</option>
+              <option value="derogada">Derogada</option>
+              <option value="modificada">Modificada</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-materia">Materia</label>
+            <select id="filter-materia">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-desde">Desde</label>
+            <select id="filter-desde">
+              <option value="">Cualquier año</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-hasta">Hasta</label>
+            <select id="filter-hasta">
+              <option value="">Cualquier año</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="sort-by">Ordenar</label>
+            <select id="sort-by">
+              <option value="relevance">Relevancia</option>
+              <option value="date-desc">Mas recientes</option>
+              <option value="date-asc">Mas antiguas</option>
+              <option value="title-asc">Titulo A-Z</option>
+              <option value="title-desc">Titulo Z-A</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <div id="search-results-info" class="results-info" role="status" aria-live="polite">
+          Mostrando <span id="results-showing">0</span> de <span id="results-count">0</span> normas
+          <span id="search-mode" class="search-mode"></span>
+        </div>
+      </section>
+
+      <!-- Favoritos section -->
+      <section id="favorites-section" class="quick-access-section" style="display: none;">
+        <div class="section-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            Favoritos
+          </h2>
+          <button type="button" id="clear-favorites" class="btn-clear" title="Limpiar favoritos">Limpiar</button>
+        </div>
+        <ul id="favorites-list" class="quick-access-list"></ul>
+      </section>
+
+      <!-- Recently viewed section -->
+      <section id="recent-section" class="quick-access-section" style="display: none;">
+        <div class="section-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Vistos recientemente
+          </h2>
+          <button type="button" id="clear-recent" class="btn-clear" title="Limpiar historial">Limpiar</button>
+        </div>
+        <ul id="recent-list" class="quick-access-list"></ul>
+      </section>
+
+      <div id="search-examples" class="search-examples">
+        <span class="examples-label">Ejemplos:</span>
+        <button type="button" class="example-chip" data-query="codigo civil">Codigo Civil</button>
+        <button type="button" class="example-chip" data-query="articulo 2">Articulo 2</button>
+        <button type="button" class="example-chip" data-query="constitucion">Constitucion</button>
+        <button type="button" class="example-chip" data-query="penal delitos">Penal</button>
+        <button type="button" class="example-chip" data-query="tributario impuesto">Tributario</button>
+      </div>
+
+      <ul class="leyes-list" id="leyes-list"></ul>
+
+      <div id="pagination" class="pagination" style="display: none;">
+        <button type="button" id="load-more" class="btn-load-more">
+          Cargar mas resultados
+        </button>
+      </div>
+
+      <div id="no-results" class="no-results" style="display: none;" role="status" aria-live="polite">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+          <path d="M8 8l6 6"></path>
+          <path d="M14 8l-6 6"></path>
+        </svg>
+        <p>No se encontraron normas</p>
+        <span class="suggestion">Intenta con terminos mas generales o revisa la ortografia</span>
+        <button type="button" id="clear-filters" class="btn-secondary">Limpiar filtros</button>
+      </div>
+
+      <script type="application/json" id="rango-labels" set:html={rangoLabelsJson}></script>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import Fuse from 'fuse.js'
+
+  const ITEMS_PER_PAGE = 50
+
+  // Load rango labels
+  const rangoLabelsData = document.getElementById('rango-labels')
+  const rangoLabels: Record<string, string> =
+    rangoLabelsData ? JSON.parse(rangoLabelsData.textContent || '{}') : {}
+
+  // Load search index from static JSON file
+  let rawIndex: Array<{id: string, t: string, r: string, e?: string, f: string, b: string, m?: string[]}> = []
+
+  interface Ley {
+    identificador: string
+    titulo: string
+    rango: string
+    estado: string
+    fechaPublicacion: string
+    body: string
+    materias: string[]
+  }
+
+  interface FuseMatch {
+    key?: string
+    indices: readonly [number, number][]
+  }
+
+  interface FuseResult {
+    item: Ley
+    matches?: readonly FuseMatch[]
+    score?: number
+  }
+
+  // Web Worker setup
+  let searchWorker: Worker | null = null
+  let workerReady = false
+  let pendingSearch: string | null = null
+  let fuse: Fuse<Ley> | null = null
+
+  // Forward declarations for worker callbacks
+  let performSearch: (query: string) => void
+  let handleSearchResults: (results: FuseResult[], query: string) => void
+
+  // Initialize worker if supported
+  if (typeof Worker !== 'undefined') {
+    try {
+      searchWorker = new Worker('/search-worker.js')
+      searchWorker.onmessage = (e) => {
+        if (e.data.type === 'ready') {
+          workerReady = true
+          console.log('Search worker ready with', e.data.count, 'items')
+          // If there's a pending search, execute it now
+          if (pendingSearch) {
+            const query = pendingSearch
+            pendingSearch = null
+            performSearch(query)
+          }
+        } else if (e.data.type === 'results') {
+          handleSearchResults(e.data.results, e.data.query)
+        } else if (e.data.type === 'error') {
+          console.error('Search worker error:', e.data.message)
+          workerReady = false
+          // Fall back to main thread
+          if (pendingSearch) {
+            const query = pendingSearch
+            pendingSearch = null
+            performSearch(query)
+          }
+        }
+      }
+      searchWorker.onerror = (error) => {
+        console.error('Search worker error:', error)
+        workerReady = false
+        searchWorker = null
+      }
+    } catch (error) {
+      console.error('Failed to create search worker:', error)
+      searchWorker = null
+    }
+  }
+
+  ;(async () => {
+    // Fetch search index from static JSON file
+    try {
+      const response = await fetch('/search-index.json')
+      rawIndex = await response.json()
+    } catch (error) {
+      console.error('Failed to load search index:', error)
+      return
+    }
+
+    // Update subtitle with count
+    const subtitleText = document.getElementById('subtitle-text')
+    if (subtitleText) {
+      subtitleText.textContent = `Explora ${rawIndex.length} normas de legislacion peruana. Busqueda por titulo, numero y contenido.`
+    }
+
+    // Populate filter dropdowns
+    const uniqueRangos = [...new Set(rawIndex.map((l) => l.r))].filter(Boolean).sort()
+    const filterTipoEl = document.getElementById('filter-tipo') as HTMLSelectElement | null
+    if (filterTipoEl) {
+      for (const rango of uniqueRangos) {
+        const option = document.createElement('option')
+        option.value = rango
+        option.textContent = rangoLabels[rango] ?? rango
+        filterTipoEl.appendChild(option)
+      }
+    }
+
+    // Populate materia filter
+    const allMaterias = rawIndex.flatMap((l) => l.m ?? [])
+    const materiaCount = new Map<string, number>()
+    for (const m of allMaterias) {
+      materiaCount.set(m, (materiaCount.get(m) || 0) + 1)
+    }
+    const topMaterias = [...materiaCount.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 30)
+      .map(([m]) => m)
+      .sort((a, b) => a.localeCompare(b, 'es'))
+
+    const filterMateriaEl = document.getElementById('filter-materia') as HTMLSelectElement | null
+    if (filterMateriaEl) {
+      for (const materia of topMaterias) {
+        const option = document.createElement('option')
+        option.value = materia
+        option.textContent = materia
+        filterMateriaEl.appendChild(option)
+      }
+    }
+
+    // Populate year filters
+    const dates = rawIndex.map((l) => l.f).filter(Boolean).sort()
+    const minYear = dates.length > 0 ? dates[0].substring(0, 4) : '1990'
+    const maxYear = dates.length > 0 ? dates[dates.length - 1].substring(0, 4) : '2024'
+    const years = Array.from({ length: Number(maxYear) - Number(minYear) + 1 }, (_, i) => Number(maxYear) - i)
+
+    const filterDesdeEl = document.getElementById('filter-desde') as HTMLSelectElement | null
+    const filterHastaEl = document.getElementById('filter-hasta') as HTMLSelectElement | null
+    if (filterDesdeEl) {
+      for (const year of years) {
+        const option = document.createElement('option')
+        option.value = year.toString()
+        option.textContent = year.toString()
+        filterDesdeEl.appendChild(option)
+      }
+    }
+    if (filterHastaEl) {
+      for (const year of years) {
+        const option = document.createElement('option')
+        option.value = year.toString()
+        option.textContent = year.toString()
+        filterHastaEl.appendChild(option)
+      }
+    }
+
+    // Update results count
+    const resultsCountEl = document.getElementById('results-count')
+    if (resultsCountEl) {
+      resultsCountEl.textContent = rawIndex.length.toString()
+    }
+
+    const leyes: Ley[] = rawIndex.map((l) => ({
+      identificador: l.id,
+      titulo: l.t,
+      rango: l.r,
+      estado: l.e ?? 'vigente',
+      fechaPublicacion: l.f,
+      body: l.b,
+      materias: l.m ?? [],
+    }))
+
+    // Initialize fallback Fuse instance for browsers without Worker support
+    if (!searchWorker) {
+      fuse = new Fuse(leyes, {
+        keys: [
+          { name: 'titulo', weight: 0.5 },
+          { name: 'identificador', weight: 0.3 },
+          { name: 'body', weight: 0.2 },
+        ],
+        threshold: 0.4,
+        ignoreLocation: true,
+        includeMatches: true,
+        includeScore: true,
+        minMatchCharLength: 2,
+      })
+    }
+
+    // DOM elements
+    const searchInput = document.getElementById('search-input') as HTMLInputElement | null
+    const clearBtn = document.getElementById('clear-search') as HTMLButtonElement | null
+    const filterTipo = document.getElementById('filter-tipo') as HTMLSelectElement | null
+    const filterEstado = document.getElementById('filter-estado') as HTMLSelectElement | null
+    const filterMateria = document.getElementById('filter-materia') as HTMLSelectElement | null
+    const filterDesde = document.getElementById('filter-desde') as HTMLSelectElement | null
+    const filterHasta = document.getElementById('filter-hasta') as HTMLSelectElement | null
+    const sortBy = document.getElementById('sort-by') as HTMLSelectElement | null
+    const leyesList = document.getElementById('leyes-list') as HTMLUListElement | null
+    const resultsShowing = document.getElementById('results-showing') as HTMLSpanElement | null
+    const resultsCount = document.getElementById('results-count') as HTMLSpanElement | null
+    const searchMode = document.getElementById('search-mode') as HTMLSpanElement | null
+    const noResults = document.getElementById('no-results') as HTMLDivElement | null
+    const clearFiltersBtn = document.getElementById('clear-filters') as HTMLButtonElement | null
+    const examplesSection = document.getElementById('search-examples') as HTMLDivElement | null
+    const exampleChips = document.querySelectorAll<HTMLButtonElement>('.example-chip')
+    const pagination = document.getElementById('pagination') as HTMLDivElement | null
+    const loadMoreBtn = document.getElementById('load-more') as HTMLButtonElement | null
+
+    if (!searchInput || !leyesList) return
+
+    let currentResults: FuseResult[] = []
+    let displayedCount = 0
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+    function highlightMatch(text: string, indices: readonly [number, number][]): string {
+      if (!indices || indices.length === 0) return escapeHtml(text)
+      let result = ''
+      let lastIndex = 0
+      for (const [start, end] of indices) {
+        result += escapeHtml(text.slice(lastIndex, start))
+        result += `<mark>${escapeHtml(text.slice(start, end + 1))}</mark>`
+        lastIndex = end + 1
+      }
+      result += escapeHtml(text.slice(lastIndex))
+      return result
+    }
+
+    function escapeHtml(text: string): string {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    function createLeyCard(ley: Ley, matches?: readonly FuseMatch[], query?: string): string {
+      const tituloMatch = matches?.find((m) => m.key === 'titulo')
+      const titulo = tituloMatch
+        ? highlightMatch(ley.titulo, tituloMatch.indices)
+        : escapeHtml(ley.titulo)
+
+      const rangoLabel = rangoLabels[ley.rango] ?? ley.rango
+      const estadoBadge = ley.estado !== 'vigente'
+        ? `<span class="badge badge-outdated">${escapeHtml(ley.estado)}</span>`
+        : ''
+
+      const href = query ? `/leyes/${escapeHtml(ley.identificador)}?q=${encodeURIComponent(query)}` : `/leyes/${escapeHtml(ley.identificador)}`
+
+      return `
+        <li>
+          <a href="${href}" class="ley-card">
+            <div class="ley-card-main">
+              <span class="ley-titulo">${titulo}</span>
+              <div class="ley-meta">
+                <span class="badge badge-rango">${escapeHtml(rangoLabel)}</span>
+                ${estadoBadge}
+                <span class="fecha">${escapeHtml(ley.fechaPublicacion)}</span>
+              </div>
+            </div>
+            <span class="ley-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+      `
+    }
+
+    function sortResults(results: FuseResult[], sortOption: string, hasQuery: boolean): FuseResult[] {
+      const sorted = [...results]
+
+      switch (sortOption) {
+        case 'date-desc':
+          sorted.sort((a, b) => b.item.fechaPublicacion.localeCompare(a.item.fechaPublicacion))
+          break
+        case 'date-asc':
+          sorted.sort((a, b) => a.item.fechaPublicacion.localeCompare(b.item.fechaPublicacion))
+          break
+        case 'title-asc':
+          sorted.sort((a, b) => a.item.titulo.localeCompare(b.item.titulo, 'es'))
+          break
+        case 'title-desc':
+          sorted.sort((a, b) => b.item.titulo.localeCompare(a.item.titulo, 'es'))
+          break
+        case 'relevance':
+        default:
+          // Keep Fuse.js order for queries, or sort by date desc for no query
+          if (!hasQuery) {
+            sorted.sort((a, b) => b.item.fechaPublicacion.localeCompare(a.item.fechaPublicacion))
+          }
+          break
+      }
+
+      return sorted
+    }
+
+    let currentQuery = ''
+    let lastSearchQuery = ''
+
+    function renderResults(startIndex: number = 0) {
+      if (!leyesList) return
+
+      const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, currentResults.length)
+
+      if (startIndex === 0) {
+        leyesList.innerHTML = ''
+      }
+
+      const fragment = document.createDocumentFragment()
+      const tempDiv = document.createElement('div')
+
+      for (let i = startIndex; i < endIndex; i++) {
+        const { item, matches } = currentResults[i]
+        tempDiv.innerHTML = createLeyCard(item, matches, currentQuery)
+        const li = tempDiv.firstElementChild
+        if (li) fragment.appendChild(li)
+      }
+
+      leyesList.appendChild(fragment)
+      displayedCount = endIndex
+
+      // Update UI
+      if (resultsShowing) resultsShowing.textContent = displayedCount.toString()
+      if (pagination) {
+        pagination.style.display = displayedCount < currentResults.length ? 'flex' : 'none'
+      }
+      if (loadMoreBtn) {
+        const remaining = currentResults.length - displayedCount
+        loadMoreBtn.textContent = `Cargar ${Math.min(remaining, ITEMS_PER_PAGE)} mas (${remaining} restantes)`
+      }
+    }
+
+    performSearch = (query: string) => {
+      if (searchWorker && workerReady) {
+        // Use Web Worker
+        searchWorker.postMessage({ type: 'search', query, limit: 10000 })
+      } else if (fuse) {
+        // Fallback to main thread
+        const fuseResults = fuse.search(query)
+        const results = fuseResults.map((r) => ({
+          item: r.item,
+          matches: r.matches,
+          score: r.score,
+        }))
+        handleSearchResults(results, query)
+      } else {
+        // Worker not ready yet, queue the search
+        pendingSearch = query
+      }
+    }
+
+    handleSearchResults = (results: FuseResult[], query: string) => {
+      // Ignore if this is not the latest search
+      if (query !== lastSearchQuery) return
+
+      if (!searchInput || !filterTipo || !filterEstado || !filterMateria || !filterDesde || !filterHasta || !sortBy) return
+
+      const tipo = filterTipo.value
+      const estado = filterEstado.value
+      const materia = filterMateria.value
+      const desde = filterDesde.value
+      const hasta = filterHasta.value
+      const sort = sortBy.value
+
+      // Apply filters
+      let filtered = results.filter(({ item }) => {
+        if (tipo && item.rango !== tipo) return false
+        if (estado && item.estado !== estado) return false
+        if (materia && !item.materias.includes(materia)) return false
+
+        if (desde || hasta) {
+          const year = item.fechaPublicacion ? Number.parseInt(item.fechaPublicacion.substring(0, 4)) : 0
+          if (desde && year < Number.parseInt(desde)) return false
+          if (hasta && year > Number.parseInt(hasta)) return false
+        }
+
+        return true
+      })
+
+      // Sort
+      filtered = sortResults(filtered, sort, true)
+
+      currentResults = filtered
+      displayedCount = 0
+      currentQuery = query
+
+      // Update counts
+      if (resultsCount) resultsCount.textContent = currentResults.length.toString()
+      if (searchMode) searchMode.textContent = ' (busqueda inteligente)'
+
+      // Render first page
+      renderResults(0)
+
+      // Show/hide elements
+      if (noResults) noResults.style.display = currentResults.length === 0 ? 'flex' : 'none'
+      if (leyesList) leyesList.style.display = currentResults.length === 0 ? 'none' : ''
+      if (clearBtn) clearBtn.style.display = searchInput.value ? 'flex' : 'none'
+      if (examplesSection) examplesSection.style.display = 'none'
+    }
+
+    function filterAndSearch() {
+      if (!searchInput || !filterTipo || !filterEstado || !filterMateria || !filterDesde || !filterHasta || !sortBy) return
+
+      const query = searchInput.value.trim()
+      const tipo = filterTipo.value
+      const estado = filterEstado.value
+      const materia = filterMateria.value
+      const desde = filterDesde.value
+      const hasta = filterHasta.value
+      const sort = sortBy.value
+
+      let results: FuseResult[]
+      let hasQuery = false
+
+      if (query.length >= 2) {
+        lastSearchQuery = query
+        performSearch(query)
+        return
+      } else {
+        results = leyes.map((item) => ({ item, matches: [], score: 0 }))
+        currentQuery = ''
+      }
+
+      // Apply filters
+      results = results.filter(({ item }) => {
+        if (tipo && item.rango !== tipo) return false
+        if (estado && item.estado !== estado) return false
+        if (materia && !item.materias.includes(materia)) return false
+
+        if (desde || hasta) {
+          const year = item.fechaPublicacion ? Number.parseInt(item.fechaPublicacion.substring(0, 4)) : 0
+          if (desde && year < Number.parseInt(desde)) return false
+          if (hasta && year > Number.parseInt(hasta)) return false
+        }
+
+        return true
+      })
+
+      // Sort
+      results = sortResults(results, sort, hasQuery)
+
+      currentResults = results
+      displayedCount = 0
+
+      // Update counts
+      if (resultsCount) resultsCount.textContent = currentResults.length.toString()
+      if (searchMode) searchMode.textContent = hasQuery ? ' (busqueda inteligente)' : ''
+
+      // Render first page
+      renderResults(0)
+
+      // Show/hide elements
+      const hasFilters = query || tipo || estado || materia || desde || hasta
+      if (noResults) noResults.style.display = currentResults.length === 0 ? 'flex' : 'none'
+      if (leyesList) leyesList.style.display = currentResults.length === 0 ? 'none' : ''
+      if (clearBtn) clearBtn.style.display = searchInput.value ? 'flex' : 'none'
+      if (examplesSection) examplesSection.style.display = hasFilters ? 'none' : 'flex'
+    }
+
+    function debouncedFilter() {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(filterAndSearch, 150)
+    }
+
+    function clearSearch() {
+      if (!searchInput || !filterTipo || !filterEstado || !filterMateria || !filterDesde || !filterHasta || !sortBy) return
+      searchInput.value = ''
+      filterTipo.value = ''
+      filterEstado.value = ''
+      filterMateria.value = ''
+      filterDesde.value = ''
+      filterHasta.value = ''
+      sortBy.value = 'relevance'
+      filterAndSearch()
+      searchInput.focus()
+    }
+
+    function loadMore() {
+      renderResults(displayedCount)
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', debouncedFilter)
+    filterTipo?.addEventListener('change', filterAndSearch)
+    filterEstado?.addEventListener('change', filterAndSearch)
+    filterMateria?.addEventListener('change', filterAndSearch)
+    filterDesde?.addEventListener('change', filterAndSearch)
+    filterHasta?.addEventListener('change', filterAndSearch)
+    sortBy?.addEventListener('change', filterAndSearch)
+    clearBtn?.addEventListener('click', clearSearch)
+    clearFiltersBtn?.addEventListener('click', clearSearch)
+    loadMoreBtn?.addEventListener('click', loadMore)
+
+    exampleChips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        if (!searchInput) return
+        searchInput.value = chip.dataset.query || ''
+        filterAndSearch()
+      })
+    })
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        searchInput?.focus()
+        searchInput?.select()
+      }
+      if (e.key === 'Escape' && document.activeElement === searchInput) {
+        clearSearch()
+      }
+    })
+
+    // URL params
+    const urlParams = new URLSearchParams(window.location.search)
+    const queryFromUrl = urlParams.get('q')
+    if (queryFromUrl && searchInput) {
+      searchInput.value = queryFromUrl
+    }
+
+    // Initial render
+    filterAndSearch()
+
+    // Favorites and Recently Viewed
+    const favoritesSection = document.getElementById('favorites-section')
+    const favoritesList = document.getElementById('favorites-list')
+    const clearFavoritesBtn = document.getElementById('clear-favorites')
+    const recentSection = document.getElementById('recent-section')
+    const recentList = document.getElementById('recent-list')
+    const clearRecentBtn = document.getElementById('clear-recent')
+
+    interface QuickAccessItem {
+      id: string
+      titulo: string
+      rango: string
+      fecha: string
+    }
+
+    function createQuickAccessCard(item: QuickAccessItem, query: string = ''): string {
+      const rangoLabel = rangoLabels[item.rango] ?? item.rango
+      const href = query ? `/leyes/${item.id}?q=${encodeURIComponent(query)}` : `/leyes/${item.id}`
+      return `
+        <li>
+          <a href="${href}" class="quick-access-card">
+            <span class="quick-access-titulo">${escapeHtml(item.titulo)}</span>
+            <span class="quick-access-meta">
+              <span class="badge badge-rango">${escapeHtml(rangoLabel)}</span>
+              <span class="fecha">${escapeHtml(item.fecha)}</span>
+            </span>
+          </a>
+        </li>
+      `
+    }
+
+    function renderFavorites() {
+      if (!favoritesSection || !favoritesList) return
+      try {
+        const bookmarks: QuickAccessItem[] = JSON.parse(localStorage.getItem('bookmarks') || '[]')
+        if (bookmarks.length === 0) {
+          favoritesSection.style.display = 'none'
+          return
+        }
+        favoritesSection.style.display = 'block'
+        favoritesList.innerHTML = bookmarks.slice(0, 5).map(b => createQuickAccessCard(b)).join('')
+      } catch {
+        favoritesSection.style.display = 'none'
+      }
+    }
+
+    function renderRecentlyViewed() {
+      if (!recentSection || !recentList) return
+      try {
+        const recent: QuickAccessItem[] = JSON.parse(localStorage.getItem('recentlyViewed') || '[]')
+        if (recent.length === 0) {
+          recentSection.style.display = 'none'
+          return
+        }
+        recentSection.style.display = 'block'
+        recentList.innerHTML = recent.slice(0, 5).map(r => createQuickAccessCard(r)).join('')
+      } catch {
+        recentSection.style.display = 'none'
+      }
+    }
+
+    clearFavoritesBtn?.addEventListener('click', () => {
+      localStorage.removeItem('bookmarks')
+      renderFavorites()
+    })
+
+    clearRecentBtn?.addEventListener('click', () => {
+      localStorage.removeItem('recentlyViewed')
+      renderRecentlyViewed()
+    })
+
+    // Render quick access sections
+    renderFavorites()
+    renderRecentlyViewed()
+  })()
+</script>
+
+<style>
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb span:not(:last-child) {
+    color: var(--color-border);
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-muted);
+  }
+
+  .search-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+
+  #search-input {
+    width: 100%;
+    padding: 0.875rem 2.75rem 0.875rem 2.75rem;
+    font-size: 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    color: var(--color-text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  #search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  #search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--color-border);
+    border: none;
+    border-radius: 6px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .clear-btn:hover {
+    background: var(--color-text-muted);
+    color: var(--color-bg);
+  }
+
+  .filters {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    border: none;
+    padding: 0;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    min-inline-size: min-content;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .filter-group label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .filter-group select {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    min-width: 120px;
+  }
+
+  .filter-group select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .results-info {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  #results-showing, #results-count {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .search-mode {
+    font-size: 0.8rem;
+    color: var(--color-accent);
+  }
+
+  .search-examples {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-secondary);
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+  }
+
+  .examples-label {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-right: 0.25rem;
+  }
+
+  .example-chip {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .example-chip:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #000;
+  }
+
+  .leyes-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .leyes-list :global(.ley-card) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    transition: border-color 0.15s, background 0.15s;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .leyes-list :global(.ley-card:hover) {
+    border-color: var(--color-accent);
+    background: #141414f0;
+    text-decoration: none;
+  }
+
+  .leyes-list :global(.ley-card-main) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .leyes-list :global(.ley-titulo) {
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .leyes-list :global(.ley-titulo mark) {
+    background: rgba(255, 200, 0, 0.3);
+    color: inherit;
+    padding: 0.1em 0.2em;
+    border-radius: 2px;
+  }
+
+  .leyes-list :global(.ley-meta) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .leyes-list :global(.badge) {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .leyes-list :global(.badge-rango) {
+    background: #27272a;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+  }
+
+  .leyes-list :global(.badge-outdated) {
+    background: transparent;
+    color: #888;
+    border: 1px solid #444;
+  }
+
+  .leyes-list :global(.fecha) {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .leyes-list :global(.ley-arrow) {
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    transition: color 0.15s, transform 0.15s;
+  }
+
+  .leyes-list :global(.ley-card:hover .ley-arrow) {
+    color: var(--color-accent);
+    transform: translateX(3px);
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+
+  .btn-load-more {
+    padding: 0.875rem 2rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-load-more:hover {
+    border-color: var(--color-accent);
+    background: #1a1a1a;
+  }
+
+  .no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+
+  .no-results svg {
+    opacity: 0.5;
+  }
+
+  .no-results p {
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .suggestion {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    opacity: 0.7;
+  }
+
+  .btn-secondary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-text-muted);
+    background: var(--color-border);
+  }
+
+  /* Quick access sections (favorites & recently viewed) */
+  .quick-access-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  .section-header h2 svg {
+    color: var(--color-text-muted);
+  }
+
+  .btn-clear {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-clear:hover {
+    background: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .quick-access-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .quick-access-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .quick-access-card:hover {
+    border-color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .quick-access-titulo {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .quick-access-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .quick-access-meta .badge {
+    display: inline-block;
+    padding: 0.15em 0.5em;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: #27272a;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+  }
+
+  .quick-access-meta .fecha {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .container {
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .breadcrumb {
+      margin-bottom: 1.5rem;
+    }
+
+    .page-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+    }
+
+    #search-input {
+      padding: 0.75rem 2.5rem;
+      font-size: 0.9rem;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .filter-group select {
+      width: 100%;
+      min-width: unset;
+      font-size: 0.75rem;
+      padding: 0.45rem 1.75rem 0.45rem 0.5rem;
+    }
+
+    .search-examples {
+      padding: 0.625rem 0.75rem;
+    }
+
+    .examples-label {
+      width: 100%;
+      margin-bottom: 0.25rem;
+    }
+
+    .example-chip {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+    }
+
+    .leyes-list {
+      gap: 0.5rem;
+    }
+
+    .leyes-list :global(.ley-card) {
+      padding: 1rem;
+    }
+
+    .leyes-list :global(.ley-card-main) {
+      gap: 0.375rem;
+    }
+
+    .leyes-list :global(.ley-titulo) {
+      font-size: 0.95rem;
+    }
+
+    .leyes-list :global(.ley-meta) {
+      gap: 0.375rem;
+    }
+
+    .leyes-list :global(.badge) {
+      font-size: 0.68rem;
+      padding: 0.15em 0.5em;
+    }
+
+    .leyes-list :global(.fecha) {
+      font-size: 0.75rem;
+    }
+
+    .leyes-list :global(.ley-arrow) {
+      display: none;
+    }
+
+    .btn-load-more {
+      width: 100%;
+    }
+  }
+</style>

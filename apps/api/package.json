@@ -1,0 +1,35 @@
+{
+  "name": "@legalize-pe/api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest --passWithNoTests",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:import": "tsx src/scripts/import-leyes.ts"
+  },
+  "dependencies": {
+    "@legalize-pe/git-reader": "workspace:*",
+    "@legalize-pe/git-publisher": "workspace:*",
+    "@legalize-pe/parser": "workspace:*",
+    "@libsql/client": "^0.14.0",
+    "drizzle-orm": "^0.38.3",
+    "next": "15.5.18",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "drizzle-kit": "^0.30.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
