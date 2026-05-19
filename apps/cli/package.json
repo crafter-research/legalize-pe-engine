@@ -1,0 +1,25 @@
+{
+  "name": "@legalize-pe/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "legalize-pe-recon": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "bun src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@legalize-pe/core": "workspace:*",
+    "@legalize-pe/jurisdictions": "workspace:*",
+    "@legalize-pe/git-publisher": "workspace:*",
+    "@legalize-pe/recon": "workspace:*",
+    "@legalize-pe/parser": "workspace:*",
+    "commander": "^14.0.0",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

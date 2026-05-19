@@ -1,0 +1,27 @@
+{
+  "name": "legalize-pe-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Engine for legalize-pe: recon CLI + web app + scraper packages. Pre-1.0.",
+  "license": "MIT",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck",
+    "cli": "bun apps/cli/src/cli.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/bun": "^1.3.0",
+    "turbo": "^2.5.7",
+    "typescript": "^5.9.0"
+  },
+  "packageManager": "bun@1.3.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,11 @@
+node_modules
+dist
+.next
+.turbo
+*.log
+.env
+.env.local
+.DS_Store
+data/raw/
+data/cache/
+.cache/
