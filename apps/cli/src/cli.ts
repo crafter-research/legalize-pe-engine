@@ -117,6 +117,21 @@ program
   });
 
 program
+  .command("path-colombia")
+  .description("Build timeline of 32 commits over pe/CON-1993.md (bootstrap + 31 reformas)")
+  .option("--corpus <path>", "Path to corpus repo", "../legalize-pe")
+  .option("--dry-run", "Print plan without writing")
+  .option("--plan-out <path>", "TSV plan output for bash commit loop", "./path-colombia-plan.tsv")
+  .action(async (opts: { corpus: string; dryRun?: boolean; planOut: string }) => {
+    const { pathColombiaConstitucion } = await import("./scripts/path-colombia-constitucion.ts");
+    await pathColombiaConstitucion({
+      corpusRoot: resolve(opts.corpus),
+      dryRun: !!opts.dryRun,
+      planOut: opts.planOut,
+    });
+  });
+
+program
   .command("bootstrap-plan")
   .description("Generate TSV plan (relativePath, identifier, title, date, year) to be consumed by bash loop")
   .option("--corpus <path>", "Path to corpus repo", "../legalize-pe")

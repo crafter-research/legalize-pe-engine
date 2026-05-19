@@ -9,3 +9,4 @@ dist
 data/raw/
 data/cache/
 .cache/
+.vercel
