@@ -1,0 +1,72 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Button } from "@/components/ui/button";
+import { ArrowRightIcon, GitForkIcon } from "lucide-react";
+---
+
+<Layout title="About · Legalize PE" description="Why Legalize PE exists, who maintains it, and how to contribute.">
+  <section class="border-b border-border/60">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 py-16 lg:py-24">
+      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-4">About</p>
+      <h1 class="text-4xl md:text-6xl tracking-tight leading-[1.05]">Why this exists</h1>
+      <div class="prose mt-8 text-[15px] leading-relaxed text-foreground/90 [&_h2]:[&_h2]:text-2xl [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-3 [&_p]:mb-5 [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4">
+        <p>
+          Peruvian legislation is published, but it is not <em>accessible</em> as machine-readable, version-controlled data.
+        </p>
+        <p>
+          A citizen, lawyer, journalist, or AI agent that needs to know <strong>which legal rules apply to them</strong> faces a fragmented landscape: SPIJ has the national text but not the sub-national; El Peruano publishes reforms as new PDFs unlinked to their predecessors; 1,919 issuing authorities each have their own portal with their own schema; commercial providers charge for what is public domain.
+        </p>
+
+        <h2>What this is</h2>
+        <p>
+          A two-repo system:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-5">
+          <li>
+            <strong>Corpus</strong> at <a href="https://github.com/crafter-research/legalize-pe">crafter-research/legalize-pe</a>. Every Peruvian legal norm as a Markdown file with YAML frontmatter, following SPEC v0.2. Every reform is a git commit with the real publication date.
+          </li>
+          <li>
+            <strong>Engine</strong> at <a href="https://github.com/crafter-research/legalize-pe-engine">crafter-research/legalize-pe-engine</a>. The CLI, this web app, the scrapers, and the recon IRs that produce the corpus. Pre-1.0.
+          </li>
+        </ul>
+
+        <h2>What makes it different</h2>
+        <p>
+          <strong>Sub-national coverage.</strong> Peru has 1,919 legally distinct issuing authorities: 25 regional governments, Lima Metropolitana, Callao, 196 provincial municipalities, and 1,695 district municipalities. SPIJ covers national legislation decently and almost nothing below it. This is the first attempt at a cohesive sub-national legal corpus aggregation for a Global South country.
+        </p>
+        <p>
+          <strong>Full Constitution timeline.</strong> <code class="font-id text-sm">git log pe/CON-1993.md</code> returns 32 commits with real author dates from 1993-12-30 to 2024-12-11. No other country in the legalize.dev federation has its constitution this granularly versioned.
+        </p>
+        <p>
+          <strong>Agent-first engineering.</strong> Every step of the pipeline is invocable from a CLI. Recon writes a persisted IR per jurisdiction; runtime extraction is then zero-LLM and reproducible.
+        </p>
+
+        <h2>Federation</h2>
+        <p>
+          Same spec, same commit conventions, same git-native workflow as 30+ other countries on <a href="https://legalize.dev">legalize.dev</a>. Community-maintained.
+        </p>
+
+        <h2>License</h2>
+        <p>
+          The text of legal norms is public domain by force of law (Decreto Legislativo 822, Art. 9). Repository structure and tooling: MIT.
+        </p>
+
+        <h2>Maintainer</h2>
+        <p>
+          <a href="https://github.com/Railly">Railly Hugo</a>, <a href="https://github.com/crafter-research">Crafter Research</a>.
+        </p>
+      </div>
+
+      <div class="mt-10 flex flex-wrap gap-3">
+        <Button size="lg" className="gap-2">
+          <a href="/laws" class="flex items-center gap-2">Browse laws <ArrowRightIcon className="size-4" /></a>
+        </Button>
+        <Button variant="outline" size="lg" className="gap-2">
+          <a href="https://github.com/crafter-research/legalize-pe" class="flex items-center gap-2">
+            <GitForkIcon className="size-4" /> GitHub
+          </a>
+        </Button>
+      </div>
+    </div>
+  </section>
+</Layout>

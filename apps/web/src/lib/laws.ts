@@ -91,7 +91,7 @@ export const CORPUS_REPO = process.env.LEGALIZE_PE_CORPUS
   : join(process.cwd(), "../../../legalize-pe");
 
 /** Path to national pe/ directory (for back-compat — most builds read all jurisdictions via collectAllNormFiles). */
-export const LEYES_DIR = join(CORPUS_REPO, "pe");
+export const LAWS_DIR = join(CORPUS_REPO, "pe");
 
 /**
  * Returns absolute paths to all jurisdiction directories that contain norms:
@@ -128,7 +128,7 @@ export function collectAllNormFiles(): Array<{ absDir: string; relativePath: str
 }
 
 /** Display labels per SPEC v0.2 rank. */
-export const rangoLabels: Record<string, string> = {
+export const rankLabels: Record<string, string> = {
   constitucion: "Constitución",
   ley: "Ley",
   decreto_legislativo: "Decreto Legislativo",

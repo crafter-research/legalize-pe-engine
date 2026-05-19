@@ -18,27 +18,27 @@ function escapeXml(text: string): string {
 }
 
 export const GET: APIRoute = async () => {
-  const leyes = buildCompactSearchIndex()
+  const laws = buildCompactSearchIndex()
 
   // Get the 50 most recent laws
-  const recentLeyes = leyes
+  const recentLaws = laws
     .filter((l) => l.f) // Must have a date
     .sort((a, b) => b.f.localeCompare(a.f))
     .slice(0, 50)
 
-  const items = recentLeyes
-    .map((ley) => {
-      const pubDate = new Date(ley.f).toUTCString()
-      const link = `${SITE_URL}/leyes/${ley.id}`
+  const items = recentLaws
+    .map((law) => {
+      const pubDate = new Date(law.f).toUTCString()
+      const link = `${SITE_URL}/laws/${law.id}`
 
       return `
     <item>
-      <title>${escapeXml(ley.t)}</title>
+      <title>${escapeXml(law.t)}</title>
       <link>${link}</link>
       <guid isPermaLink="true">${link}</guid>
       <pubDate>${pubDate}</pubDate>
-      <description>${escapeXml(ley.t)}. ${escapeXml(ley.r)} publicada el ${ley.f}.</description>
-      <category>${escapeXml(ley.r)}</category>
+      <description>${escapeXml(law.t)}. ${escapeXml(law.r)} publicada el ${law.f}.</description>
+      <category>${escapeXml(law.r)}</category>
     </item>`
     })
     .join('')

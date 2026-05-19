@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { collectAllNormFiles, parseFrontmatter } from "./leyes";
+import { collectAllNormFiles, parseFrontmatter } from "./laws";
 
-export interface SearchableLey {
+export interface SearchableLaw {
   identifier: string;
   title: string;
   rank: string;
@@ -12,7 +12,7 @@ export interface SearchableLey {
   body: string;
 }
 
-export interface CompactLey {
+export interface CompactLaw {
   id: string;
   t: string; // title
   r: string; // rank
@@ -44,9 +44,9 @@ function cleanBodyForSearch(body: string): string {
   );
 }
 
-export function buildSearchIndex(): SearchableLey[] {
+export function buildSearchIndex(): SearchableLaw[] {
   const files = collectAllNormFiles();
-  const leyes: SearchableLey[] = [];
+  const laws: SearchableLaw[] = [];
 
   for (const { absDir, relativePath } of files) {
     const content = readFileSync(join(absDir, relativePath), "utf-8");
@@ -60,7 +60,7 @@ export function buildSearchIndex(): SearchableLey[] {
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
       .slice(0, 500);
 
-    leyes.push({
+    laws.push({
       identifier: meta.identifier,
       title: meta.title,
       rank: meta.rank || "",
@@ -71,14 +71,14 @@ export function buildSearchIndex(): SearchableLey[] {
     });
   }
 
-  return leyes.sort((a, b) =>
+  return laws.sort((a, b) =>
     (b.publication_date ?? "").localeCompare(a.publication_date ?? ""),
   );
 }
 
-export function buildCompactSearchIndex(): CompactLey[] {
+export function buildCompactSearchIndex(): CompactLaw[] {
   const files = collectAllNormFiles();
-  const leyes: CompactLey[] = [];
+  const laws: CompactLaw[] = [];
 
   for (const { absDir, relativePath } of files) {
     const content = readFileSync(join(absDir, relativePath), "utf-8");
@@ -88,7 +88,7 @@ export function buildCompactSearchIndex(): CompactLey[] {
 
     const cleanedBody = cleanBodyForSearch(body).slice(0, 150);
 
-    const ley: CompactLey = {
+    const law: CompactLaw = {
       id: meta.identifier,
       t: meta.title,
       r: meta.rank || "",
@@ -99,11 +99,11 @@ export function buildCompactSearchIndex(): CompactLey[] {
 
     const status = meta.status || "in_force";
     if (status !== "in_force") {
-      ley.s = status;
+      law.s = status;
     }
 
-    leyes.push(ley);
+    laws.push(law);
   }
 
-  return leyes.sort((a, b) => (b.f ?? "").localeCompare(a.f ?? ""));
+  return laws.sort((a, b) => (b.f ?? "").localeCompare(a.f ?? ""));
 }

@@ -1,0 +1,159 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { FilterIcon, SearchIcon } from "lucide-react";
+import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+type Norm = {
+  identifier: string;
+  title: string;
+  rank: string;
+  publication_date: string;
+  jurisdiction: string;
+  status: string;
+};
+
+const norms: Norm[] = [];
+for (const { absDir, relativePath } of collectAllNormFiles()) {
+  try {
+    const raw = readFileSync(join(absDir, relativePath), "utf-8");
+    const { meta } = parseFrontmatter(raw);
+    if (!meta.title || !meta.identifier) continue;
+    norms.push({
+      identifier: meta.identifier,
+      title: meta.title,
+      rank: meta.rank ?? "",
+      publication_date: meta.publication_date ?? "",
+      jurisdiction: meta.jurisdiction ?? "pe",
+      status: meta.status ?? "in_force",
+    });
+  } catch {
+    /* skip */
+  }
+}
+norms.sort((a, b) => (b.publication_date ?? "").localeCompare(a.publication_date ?? ""));
+
+// Show top 50 by date initially; cmd+k is the real search UX
+const PAGE_SIZE = 50;
+const initial = norms.slice(0, PAGE_SIZE);
+
+const total = norms.length;
+const rankCounts: Record<string, number> = {};
+for (const n of norms) rankCounts[n.rank] = (rankCounts[n.rank] ?? 0) + 1;
+
+const RANK_LABELS_EN: Record<string, string> = {
+  constitucion: "Constitution",
+  ley: "Law",
+  decreto_legislativo: "Legislative Decree",
+  decreto_supremo: "Supreme Decree",
+  decreto_de_urgencia: "Urgency Decree",
+  decreto_urgencia: "Urgency Decree",
+  decreto_ley: "Decree Law",
+  resolucion_legislativa: "Legislative Resolution",
+  resolucion_ministerial: "Ministerial Resolution",
+  resolucion_suprema: "Supreme Resolution",
+  ley_de_reforma_constitucional: "Constitutional Reform",
+  ordenanza_regional: "Regional Ordinance",
+  ordenanza_municipal: "Municipal Ordinance",
+};
+
+const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
+  in_force: { label: "In force", cls: "text-status-in-force" },
+  repealed: { label: "Repealed", cls: "text-status-repealed" },
+  partially_repealed: { label: "Partially repealed", cls: "text-status-partial" },
+  annulled: { label: "Annulled", cls: "text-status-repealed" },
+  expired: { label: "Expired", cls: "text-muted-foreground" },
+};
+---
+
+<Layout title="Laws · Legalize PE" description={`Browse ${total.toLocaleString()} Peruvian legal norms. Filter by rank, jurisdiction, status, or search by title.`}>
+  <section class="border-b border-border/60">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16">
+      <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">Corpus</p>
+          <h1 class="text-4xl md:text-6xl tracking-tight leading-none">All laws</h1>
+          <p class="mt-3 text-muted-foreground">
+            {total.toLocaleString()} norms. Use <kbd class="inline-flex items-center px-1.5 py-0.5 text-xs rounded bg-muted border border-border font-id">⌘ K</kbd> to search by title or ID.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          <FilterIcon className="size-3.5" />
+          <span>Sorted by publication date (descending)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12">
+      {initial.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SearchIcon />
+            </EmptyMedia>
+            <EmptyTitle>No norms in the corpus yet</EmptyTitle>
+            <EmptyDescription>
+              The corpus is being built. Check back soon.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <>
+          <ul class="divide-y divide-border/60 border border-border/60 rounded-xl overflow-hidden bg-card">
+            {initial.map((n) => {
+              const status = STATUS_LABELS[n.status] ?? STATUS_LABELS.in_force;
+              return (
+                <li>
+                  <a
+                    href={`/laws/${n.identifier.toLowerCase()}`}
+                    class="flex items-start gap-4 px-5 py-4 hover:bg-accent/50 transition-colors group"
+                  >
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <Badge variant="outline" className="font-id text-xs">{n.identifier}</Badge>
+                        <Badge variant="secondary" className="text-xs">{RANK_LABELS_EN[n.rank] ?? n.rank}</Badge>
+                        {n.jurisdiction !== "pe" && (
+                          <Badge variant="outline" className="text-xs">
+                            {jurisdictionLabels[n.jurisdiction] ?? n.jurisdiction}
+                          </Badge>
+                        )}
+                        <span class={`text-xs flex items-center gap-1 ${status.cls}`}>
+                          <span class="size-1.5 rounded-full bg-current" />
+                          {status.label}
+                        </span>
+                      </div>
+                      <p class="text-sm leading-snug group-hover:text-foreground">{n.title.replace(/\.{2,}$/, "…")}</p>
+                    </div>
+                    <time datetime={n.publication_date} class="text-xs text-muted-foreground font-id shrink-0 mt-1">
+                      {n.publication_date}
+                    </time>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+
+          {total > PAGE_SIZE && (
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+              <p>Showing {PAGE_SIZE} of {total.toLocaleString()} norms.</p>
+              <p>Use <kbd class="inline-flex items-center px-1.5 py-0.5 text-xs rounded bg-muted border border-border font-id">⌘ K</kbd> to search the rest.</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  </section>
+</Layout>

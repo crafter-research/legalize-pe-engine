@@ -1,0 +1,19 @@
+---
+// Inline script that runs BEFORE any paint to set the right theme class.
+// Prevents flash of incorrect theme (FOIT).
+// Persists choice in localStorage, falls back to OS preference.
+---
+<script is:inline>
+  (function () {
+    const stored = localStorage.getItem("theme");
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark =
+      stored === "dark" || (stored === null && systemDark) || (stored === "system" && systemDark);
+
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    }
+    // Mirror to data attribute for components that need it.
+    document.documentElement.dataset.theme = stored ?? "system";
+  })();
+</script>

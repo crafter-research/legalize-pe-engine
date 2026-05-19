@@ -1,0 +1,44 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-border/60 bg-card/40 mt-auto">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+    <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+      <div class="space-y-2 max-w-md">
+        <div class="flex items-center gap-2">
+          <span class="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-base leading-none">L</span>
+          <span class="text-base leading-none tracking-tight">Legalize<span class="text-muted-foreground">.pe</span></span>
+        </div>
+        <p class="text-sm text-muted-foreground leading-relaxed">
+          Peruvian legislation as a git repository. Every law a file, every reform a commit.
+          Community-maintained by <a href="https://github.com/crafter-research" class="underline underline-offset-4 hover:text-foreground">Crafter Research</a>.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
+        <div class="space-y-1.5">
+          <p class="font-medium text-foreground">Browse</p>
+          <a href="/laws" class="block text-muted-foreground hover:text-foreground">Laws</a>
+          <a href="/regions" class="block text-muted-foreground hover:text-foreground">Regions</a>
+          <a href="/audit" class="block text-muted-foreground hover:text-foreground">Audit</a>
+        </div>
+        <div class="space-y-1.5">
+          <p class="font-medium text-foreground">Build</p>
+          <a href="/api" class="block text-muted-foreground hover:text-foreground">API</a>
+          <a href="/feed.xml" class="block text-muted-foreground hover:text-foreground">RSS</a>
+          <a href="https://github.com/crafter-research/legalize-pe" class="block text-muted-foreground hover:text-foreground">GitHub</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+      <p>
+        Content: public domain (DLeg 822 Art. 9). Code: MIT. © {year} Crafter Research.
+      </p>
+      <p>
+        Part of the <a href="https://legalize.dev" class="underline underline-offset-4 hover:text-foreground">legalize.dev</a> federation.
+      </p>
+    </div>
+  </div>
+</footer>

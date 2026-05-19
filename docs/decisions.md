@@ -76,7 +76,27 @@ We will reconsider webctl when it ships a static-listing classifier.
 
 **Why this one**: git rejects author dates before the Unix epoch. Colombia (`legalize-co`) hit the same issue and uses the same workaround. The trailer carries the real date, so no information is lost.
 
-## 10. Vercel deploy from local prebuilt, not CI build
+## 10. Accept legacy date imprecision in the inherited corpus
+
+**Decision**: ~197 national norms (12 percent of the V1 corpus) have a `publication_date` in 2026 that reflects the day they were scraped, not the day the norm was actually published. V1 ships them as-is; V2 will re-scrape from authoritative sources to recover the real dates.
+
+**Context**: the original `crafter-research/legalize-pe` corpus was assembled by Shiara in early 2026 via ad-hoc scrapers that did not consistently capture the real `publication_date` from source pages. The V1.2 migration faithfully preserved whatever date the legacy frontmatter had, including these placeholders. Examples found during the V1 web review:
+
+- `pe/DLEG-563-2026.md` has `publication_date: 2026-04-07` but the title itself reads "4 de abril de 1990". The norm is from 1990.
+- `pe/LEY-11585-2026.md` has `publication_date: 2026-04-07` but the title says "El Distrito de Pazos fue creado el 31 de enero del 1951".
+- `pe/DU-019-2023.md` has `publication_date: 1825-10-22` (Peruvian Independence Day used as a sentinel by the original scraper).
+
+**Alternatives considered**:
+
+- (a) Block V1 release until every legacy date is verified. Rejected — would push the federation listing back weeks for a documentation quality issue, not a corpus integrity issue. The text of each norm is still correct; only the metadata date is suspect.
+- (b) Re-derive dates from the source URL via OCR on the original PDF. Rejected for V1 — most gov.pe PDFs are scans (verified during V1.4 detail-page work), so OCR would require Tesseract + per-source post-processing, which is V2 scope.
+- (c) Strip the questionable dates and ship `publication_date: null`. Rejected — SPEC v0.2 requires `publication_date`, and "null" is worse than "best-effort" for downstream consumers who can flag and verify.
+
+**Why this one**: the corpus is a snapshot, not a claim of authority. Downstream consumers can grep `publication_date: '2026-` and decide for themselves. The V2 re-scrape will rewrite the affected norms with a `[correction]` commit each, preserving the audit trail.
+
+**Tracked**: github.com/crafter-research/legalize-pe-engine issue (filed 2026-05-19).
+
+## 11. Vercel deploy from local prebuilt, not CI build
 
 **Decision**: V1 deploy uses `vercel build` and `vercel deploy --prebuilt` from the engineer's machine. CI builds will come in a follow-up.
 

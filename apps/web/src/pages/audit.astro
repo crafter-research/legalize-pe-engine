@@ -1,0 +1,125 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { collectAllNormFiles, parseFrontmatter } from "@/lib/laws";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+// Build by-rank histogram for national + by-jurisdiction counts
+const files = collectAllNormFiles();
+
+const byRank: Record<string, number> = {};
+const byJurisdiction: Record<string, number> = {};
+let totalNational = 0;
+let totalRegional = 0;
+
+for (const { absDir, relativePath } of files) {
+  try {
+    const raw = readFileSync(join(absDir, relativePath), "utf-8");
+    const { meta } = parseFrontmatter(raw);
+    if (!meta.identifier) continue;
+    const dir = absDir.split("/").pop() ?? "";
+    if (dir === "pe") totalNational++;
+    else totalRegional++;
+    byRank[meta.rank ?? "unknown"] = (byRank[meta.rank ?? "unknown"] ?? 0) + 1;
+    if ((meta.jurisdiction ?? "").startsWith("pe-")) {
+      byJurisdiction[meta.jurisdiction!] = (byJurisdiction[meta.jurisdiction!] ?? 0) + 1;
+    }
+  } catch {
+    /* skip */
+  }
+}
+
+const TIER_1_TOTAL = 27;
+const tier1Covered = Object.keys(byJurisdiction).length;
+const tier1Pct = Math.round((tier1Covered / TIER_1_TOTAL) * 100);
+
+// V2/V3 not started yet
+const TIER_2_TOTAL = 196;
+const TIER_3_TOTAL = 1695;
+
+const RANK_LABELS_EN: Record<string, string> = {
+  constitucion: "Constitution",
+  ley: "Law",
+  decreto_legislativo: "Legislative Decree",
+  decreto_supremo: "Supreme Decree",
+  decreto_de_urgencia: "Urgency Decree",
+  decreto_urgencia: "Urgency Decree",
+  decreto_ley: "Decree Law",
+  resolucion_legislativa: "Legislative Resolution",
+  resolucion_ministerial: "Ministerial Resolution",
+  resolucion_suprema: "Supreme Resolution",
+  ley_de_reforma_constitucional: "Constitutional Reform",
+  ordenanza_regional: "Regional Ordinance",
+  ordenanza_municipal: "Municipal Ordinance",
+};
+
+const rankRows = Object.entries(byRank)
+  .map(([rank, count]) => ({ rank, label: RANK_LABELS_EN[rank] ?? rank, count }))
+  .sort((a, b) => b.count - a.count);
+---
+
+<Layout title="Coverage audit · Legalize PE" description="Coverage statistics across national, regional, provincial and district tiers.">
+  <section class="border-b border-border/60">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16">
+      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">Methodology</p>
+      <h1 class="text-4xl md:text-6xl tracking-tight leading-none">Coverage audit</h1>
+      <p class="mt-4 max-w-2xl text-muted-foreground leading-relaxed">
+        How much of Peru&apos;s legal universe is in the corpus today. Updated on every commit.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 space-y-10">
+      <div>
+        <h2 class="text-2xl tracking-tight mb-6">By tier</h2>
+        <div class="space-y-6">
+          {[
+            { name: "National (Tier 0)", current: totalNational, target: totalNational, note: "Constitution + laws + DLeg + DS + RM" },
+            { name: "Regional (Tier 1)", current: tier1Covered, target: TIER_1_TOTAL, note: "25 GR + Lima Metro + Callao" },
+            { name: "Provincial (Tier 2)", current: 0, target: TIER_2_TOTAL, note: "Municipalidades provinciales" },
+            { name: "District (Tier 3)", current: 0, target: TIER_3_TOTAL, note: "Municipalidades distritales (long tail)" },
+          ].map((t) => {
+            const pct = t.target === 0 ? 0 : Math.round((t.current / t.target) * 100);
+            return (
+              <div>
+                <div class="flex items-center justify-between gap-4 mb-2">
+                  <div>
+                    <p class="font-medium">{t.name}</p>
+                    <p class="text-xs text-muted-foreground">{t.note}</p>
+                  </div>
+                  <div class="text-right tabular-nums">
+                    <p class="font-id text-sm">{t.current.toLocaleString()} / {t.target.toLocaleString()}</p>
+                    <p class="text-xs text-muted-foreground">{pct}%</p>
+                  </div>
+                </div>
+                <Progress value={pct} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl tracking-tight mb-6">By rank</h2>
+        <div class="border border-border/60 rounded-xl overflow-hidden bg-card divide-y divide-border/60">
+          {rankRows.map((r) => (
+            <div class="px-5 py-3 flex items-center justify-between gap-3">
+              <span class="text-sm">{r.label}</span>
+              <span class="text-sm font-id tabular-nums text-muted-foreground">{r.count.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl tracking-tight mb-3">Notes</h2>
+        <p class="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+          Tier counts are approximate and based on INEI 2019 ({TIER_1_TOTAL} regional, {TIER_2_TOTAL} provincial, {TIER_3_TOTAL} district). Coverage growth is incremental: V1 shipped Cusco as the regional pioneer; V2 targets the remaining 26 regional jurisdictions.
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>

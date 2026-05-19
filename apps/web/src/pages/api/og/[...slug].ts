@@ -20,7 +20,7 @@ interface SearchIndexItem {
   r: string
 }
 
-const rangoLabels: Record<string, string> = {
+const rankLabels: Record<string, string> = {
   ley: 'Ley',
   'decreto-legislativo': 'Decreto Legislativo',
   'decreto-supremo': 'Decreto Supremo',
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ params }) => {
       const law = searchIndex.find((item) => item.id === slug)
       if (law) {
         title = law.t
-        rango = rangoLabels[law.r] || law.r
+        rango = rankLabels[law.r] || law.r
         subtitle = 'Legalize PE - Legislación Peruana'
       }
     } catch (error) {

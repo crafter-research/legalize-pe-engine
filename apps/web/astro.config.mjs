@@ -1,115 +1,86 @@
-import sitemap from '@astrojs/sitemap'
-import vercel from '@astrojs/vercel'
-import AstroPWA from '@vite-pwa/astro'
-import { defineConfig } from 'astro/config'
+import react from "@astrojs/react";
+import sitemap from "@astrojs/sitemap";
+import vercel from "@astrojs/vercel";
+import tailwindcss from "@tailwindcss/vite";
+import AstroPWA from "@vite-pwa/astro";
+import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  site: 'https://legalize.crafter.ing',
-  output: 'static',
-  adapter: vercel({ imageService: 'passthrough' }),
+  site: "https://legalize.crafter.ing",
+  output: "static",
+  adapter: vercel({ imageService: "passthrough" }),
+  vite: {
+    plugins: [tailwindcss()],
+  },
   integrations: [
+    react(),
     sitemap(),
     AstroPWA({
-      registerType: 'autoUpdate',
+      registerType: "autoUpdate",
       manifest: {
-        name: 'Legalize PE - Legislación Peruana',
-        short_name: 'Legalize PE',
+        name: "Legalize PE — Peruvian Law as Git",
+        short_name: "Legalize PE",
         description:
-          'Legislación peruana como repositorio Git. Cada ley es un fichero Markdown, cada reforma un commit.',
-        theme_color: '#000000',
-        background_color: '#000000',
-        display: 'standalone',
-        start_url: '/',
-        scope: '/',
+          "Peruvian legislation as a Git repository. Every law a file, every reform a commit.",
+        theme_color: "#fafaf9",
+        background_color: "#fafaf9",
+        display: "standalone",
+        start_url: "/",
+        scope: "/",
         icons: [
-          {
-            src: '/icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
+          { src: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+          { src: "/icons/icon-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
-        navigateFallback: '/offline',
+        navigateFallback: "/offline",
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
-            // CSS, JS, fonts - Cache-first
             urlPattern: /\.(?:css|js|woff2?|ttf|otf|eot)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'static-assets',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-              },
+              cacheName: "static-assets",
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
           {
-            // Images - Cache-first
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'images',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-              },
+              cacheName: "images",
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
           {
-            // Homepage and main pages - Stale-while-revalidate
-            urlPattern: /^https:\/\/legalize\.crafter\.ing\/(leyes)?$/,
-            handler: 'StaleWhileRevalidate',
+            urlPattern: /^https:\/\/legalize\.crafter\.ing\/(laws)?$/,
+            handler: "StaleWhileRevalidate",
             options: {
-              cacheName: 'pages',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-              },
+              cacheName: "pages",
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
           {
-            // Individual law pages - Stale-while-revalidate with limit
-            urlPattern: /^https:\/\/legalize\.crafter\.ing\/leyes\/.+$/,
-            handler: 'StaleWhileRevalidate',
+            urlPattern: /^https:\/\/legalize\.crafter\.ing\/laws\/.+$/,
+            handler: "StaleWhileRevalidate",
             options: {
-              cacheName: 'law-pages',
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-              },
+              cacheName: "law-pages",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
           {
-            // API responses - Network-first with fallback
             urlPattern: /^https:\/\/legalize\.crafter\.ing\/api\//,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'api',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 1 day
-              },
+              cacheName: "api",
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
               networkTimeoutSeconds: 10,
             },
           },
         ],
       },
-      devOptions: {
-        enabled: false,
-      },
+      devOptions: { enabled: false },
     }),
   ],
-})
+});

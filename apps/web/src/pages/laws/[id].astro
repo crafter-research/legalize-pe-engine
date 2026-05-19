@@ -1,0 +1,245 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { CalendarIcon, ExternalLinkIcon, FileTextIcon, GitCommitIcon } from "lucide-react";
+import { marked } from "marked";
+import { readFileSync } from "node:fs";
+import { buildIdToFileMap, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import { formatDateLong } from "@/lib/utils";
+
+export async function getStaticPaths() {
+  const idToFile = buildIdToFileMap();
+  return [...idToFile.entries()].map(([id, absPath]) => ({
+    params: { id: id.toLowerCase() },
+    props: { absPath, originalId: id },
+  }));
+}
+
+const { absPath, originalId } = Astro.props;
+const raw = readFileSync(absPath, "utf-8");
+const { meta, body } = parseFrontmatter(raw);
+
+// The corpus sometimes stores a truncated title from the listing source
+// (gob.pe truncates to ~200 chars). Detect and clean.
+const rawTitle = (meta.title ?? "").trim();
+const titleIsTruncated = /\.{2,}$/.test(rawTitle);
+const cleanTitle = titleIsTruncated ? rawTitle.replace(/\s*\.{2,}\s*$/, "…") : rawTitle;
+
+// Date precision: V1 sub-national norms may have year-only estimates
+const datePrecision = ((meta as any).date_precision as string | undefined) ?? "day";
+const dateNote = ((meta as any).notes as string | undefined) ?? "";
+
+// Strip the first H1 from the body if it duplicates the frontmatter title.
+const bodyStripped = body.replace(/^\s*#\s+.+\n+/, "");
+
+marked.use({
+  renderer: {
+    heading({ tokens, depth }: any) {
+      const text = this.parser.parseInline(tokens);
+      const rawText = tokens.map((t: any) => t.raw || "").join("");
+      const slug = rawText
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      return `<h${depth} id="${slug}">${text}</h${depth}>\n`;
+    },
+  },
+});
+
+const html = await marked(bodyStripped);
+
+const RANK_LABELS_EN: Record<string, string> = {
+  constitucion: "Constitution",
+  ley: "Law",
+  decreto_legislativo: "Legislative Decree",
+  decreto_supremo: "Supreme Decree",
+  decreto_de_urgencia: "Urgency Decree",
+  decreto_urgencia: "Urgency Decree",
+  decreto_ley: "Decree Law",
+  resolucion_legislativa: "Legislative Resolution",
+  resolucion_ministerial: "Ministerial Resolution",
+  resolucion_suprema: "Supreme Resolution",
+  ley_de_reforma_constitucional: "Constitutional Reform",
+  ordenanza_regional: "Regional Ordinance",
+  ordenanza_municipal: "Municipal Ordinance",
+};
+
+const STATUS_META: Record<string, { label: string; cls: string }> = {
+  in_force: { label: "In force", cls: "text-status-in-force" },
+  repealed: { label: "Repealed", cls: "text-status-repealed" },
+  partially_repealed: { label: "Partially repealed", cls: "text-status-partial" },
+  annulled: { label: "Annulled", cls: "text-status-repealed" },
+  expired: { label: "Expired", cls: "text-muted-foreground" },
+};
+const status = STATUS_META[meta.status] ?? STATUS_META.in_force;
+const rankLabel = RANK_LABELS_EN[meta.rank] ?? meta.rank;
+const jurisLabel = jurisdictionLabels[meta.jurisdiction ?? "pe"] ?? meta.jurisdiction ?? "Nacional";
+const appliedReforms = (meta as any).applied_reforms as string[] | undefined;
+const hasTimeline = Array.isArray(appliedReforms) && appliedReforms.length > 0;
+const wordCount = bodyStripped.trim().split(/\s+/).length;
+const readMinutes = Math.max(1, Math.round(wordCount / 220));
+---
+
+<Layout title={cleanTitle} description={cleanTitle}>
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-6 lg:py-10">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 flex items-center gap-1.5 text-xs text-muted-foreground" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-foreground transition-colors">Home</a>
+      <span aria-hidden>/</span>
+      <a href="/laws" class="hover:text-foreground transition-colors">Laws</a>
+      <span aria-hidden>/</span>
+      <span class="font-id text-foreground">{meta.identifier}</span>
+    </nav>
+
+    <div class="grid lg:grid-cols-[minmax(0,1fr)_280px] gap-10 lg:gap-12">
+      <!-- Main column -->
+      <article class="min-w-0">
+        <header class="mb-8">
+          <div class="flex items-center gap-2 mb-4 flex-wrap">
+            <Badge variant="outline" className="font-id">{meta.identifier}</Badge>
+            <Badge variant="secondary">{rankLabel}</Badge>
+            {meta.jurisdiction && meta.jurisdiction !== "pe" && (
+              <Badge variant="outline">{jurisLabel}</Badge>
+            )}
+            <span class={`text-xs flex items-center gap-1.5 ${status.cls}`}>
+              <span class="size-1.5 rounded-full bg-current" />
+              {status.label}
+            </span>
+          </div>
+
+          <h1 class="text-2xl md:text-[28px] lg:text-3xl font-semibold tracking-tight leading-[1.2] text-balance max-w-3xl">
+            {cleanTitle}
+          </h1>
+
+          {titleIsTruncated && (
+            <p class="mt-3 text-xs text-muted-foreground italic">
+              Title truncated at source. <a href={meta.source} target="_blank" rel="noopener" class="underline underline-offset-4 hover:text-foreground">View full title at gob.pe</a>.
+            </p>
+          )}
+
+          <div class="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+            {meta.publication_date && (
+              <span class="flex items-center gap-1.5">
+                <CalendarIcon className="size-3.5" />
+                {datePrecision === "year" ? (
+                  <span>{meta.publication_date.slice(0, 4)} <span class="text-muted-foreground/70">(year only)</span></span>
+                ) : (
+                  <time datetime={meta.publication_date}>{formatDateLong(meta.publication_date)}</time>
+                )}
+              </span>
+            )}
+            <span class="flex items-center gap-1.5">
+              <FileTextIcon className="size-3.5" />
+              {readMinutes} min read
+            </span>
+          </div>
+        </header>
+
+        <Separator className="mb-8" />
+
+        <div
+          class="prose-norm text-[15px] leading-[1.75] text-foreground/90 max-w-3xl
+            [&>*:first-child]:mt-0
+            [&_h1]:hidden
+            [&_h2]:font-semibold [&_h2]:text-xl [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:text-foreground
+            [&_h3]:font-semibold [&_h3]:text-base [&_h3]:tracking-tight [&_h3]:mt-7 [&_h3]:mb-2 [&_h3]:text-foreground
+            [&_h4]:font-semibold [&_h4]:text-sm [&_h4]:uppercase [&_h4]:tracking-wider [&_h4]:mt-6 [&_h4]:mb-1.5 [&_h4]:text-muted-foreground
+            [&_p]:mb-4
+            [&_strong]:text-foreground [&_strong]:font-semibold
+            [&_em]:italic
+            [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 [&_a]:decoration-primary/40 hover:[&_a]:decoration-primary
+            [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ul]:space-y-1
+            [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_ol]:space-y-1
+            [&_li]:leading-relaxed
+            [&_blockquote]:border-l-2 [&_blockquote]:border-primary/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-5
+            [&_hr]:my-8 [&_hr]:border-border/60
+            [&_code]:font-id [&_code]:text-[0.92em] [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded
+            [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:text-sm [&_pre]:my-5
+            [&_table]:w-full [&_table]:border-collapse [&_table]:my-5 [&_table]:text-sm
+            [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:bg-muted/50
+            [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2"
+          set:html={html}
+        />
+      </article>
+
+      <!-- Sidebar -->
+      <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+        <div class="bg-card border border-border/60 rounded-xl divide-y divide-border/60">
+          <div class="px-4 py-3">
+            <p class="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">Metadata</p>
+          </div>
+          <dl class="px-4 py-3 grid grid-cols-[88px_1fr] gap-y-2.5 gap-x-3 text-xs items-baseline">
+            <dt class="text-muted-foreground">Identifier</dt>
+            <dd class="font-id text-right">{meta.identifier}</dd>
+
+            <dt class="text-muted-foreground">Rank</dt>
+            <dd class="text-right">{rankLabel}</dd>
+
+            <dt class="text-muted-foreground">Status</dt>
+            <dd class={`text-right ${status.cls}`}>{status.label}</dd>
+
+            <dt class="text-muted-foreground">Jurisdiction</dt>
+            <dd class="text-right">{jurisLabel}</dd>
+
+            {meta.publication_date && (
+              <>
+                <dt class="text-muted-foreground">Published</dt>
+                <dd class="text-right font-id">{meta.publication_date}</dd>
+              </>
+            )}
+            {meta.last_updated && meta.last_updated !== meta.publication_date && (
+              <>
+                <dt class="text-muted-foreground">Updated</dt>
+                <dd class="text-right font-id">{meta.last_updated}</dd>
+              </>
+            )}
+            {meta.official_journal && (
+              <>
+                <dt class="text-muted-foreground">Gazette</dt>
+                <dd class="text-right truncate">{meta.official_journal}</dd>
+              </>
+            )}
+          </dl>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          {meta.source && (
+            <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+              <a href={meta.source} target="_blank" rel="noopener" class="flex items-center gap-2 w-full">
+                <ExternalLinkIcon className="size-3.5" />
+                <span>Original source</span>
+              </a>
+            </Button>
+          )}
+          {meta.pdf_url && (
+            <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+              <a href={meta.pdf_url} target="_blank" rel="noopener" class="flex items-center gap-2 w-full">
+                <FileTextIcon className="size-3.5" />
+                <span>Original PDF</span>
+              </a>
+            </Button>
+          )}
+        </div>
+
+        {hasTimeline && (
+          <div class="bg-card border border-border/60 rounded-xl p-4 space-y-2">
+            <div class="flex items-center gap-1.5 text-xs">
+              <GitCommitIcon className="size-3.5 text-primary" />
+              <p class="font-medium">{appliedReforms!.length} reforms applied</p>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">
+              View the commit timeline via the API:
+            </p>
+            <code class="block text-[11px] font-id text-primary break-all">
+              GET /api/normas/{originalId}/history
+            </code>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,60 @@
+---
+import { ThemeToggle } from "@/components/island/theme-toggle";
+import { CommandPaletteTrigger } from "@/components/island/command-palette-trigger";
+
+const navItems = [
+  { href: "/laws", label: "Laws" },
+  { href: "/regions", label: "Regions" },
+  { href: "/audit", label: "Audit" },
+  { href: "/api", label: "API" },
+  { href: "/about", label: "About" },
+];
+
+const pathname = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+  <div class="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
+    <a
+      href="/"
+      class="flex items-center gap-2 shrink-0 transition-opacity hover:opacity-80"
+      aria-label="Legalize PE home"
+    >
+      <span
+        class="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-lg leading-none"
+      >
+        L
+      </span>
+      <span class="text-lg leading-none tracking-tight">
+        Legalize<span class="text-muted-foreground">.pe</span>
+      </span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+      {navItems.map(({ href, label }) => {
+        const active = pathname === href || pathname.startsWith(`${href}/`);
+        return (
+          <a
+            href={href}
+            class:list={[
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              active
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/60",
+            ]}
+            aria-current={active ? "page" : undefined}
+          >
+            {label}
+          </a>
+        );
+      })}
+    </nav>
+
+    <div class="flex-1" />
+
+    <div class="flex items-center gap-1">
+      <CommandPaletteTrigger client:load />
+      <ThemeToggle client:load />
+    </div>
+  </div>
+</header>

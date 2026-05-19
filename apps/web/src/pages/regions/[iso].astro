@@ -1,0 +1,86 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeftIcon } from "lucide-react";
+import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+export async function getStaticPaths() {
+  const seen = new Set<string>();
+  for (const { absDir } of collectAllNormFiles()) {
+    const name = absDir.split("/").pop() ?? "";
+    if (name.startsWith("pe-")) seen.add(name);
+  }
+  return [...seen].map((iso) => ({ params: { iso } }));
+}
+
+const { iso } = Astro.params;
+
+type Norm = { identifier: string; title: string; rank: string; publication_date: string };
+const norms: Norm[] = [];
+for (const { absDir, relativePath } of collectAllNormFiles()) {
+  if ((absDir.split("/").pop() ?? "") !== iso) continue;
+  try {
+    const raw = readFileSync(join(absDir, relativePath), "utf-8");
+    const { meta } = parseFrontmatter(raw);
+    if (!meta.title || !meta.identifier) continue;
+    norms.push({
+      identifier: meta.identifier,
+      title: meta.title,
+      rank: meta.rank ?? "",
+      publication_date: meta.publication_date ?? "",
+    });
+  } catch {
+    /* skip */
+  }
+}
+norms.sort((a, b) => b.publication_date.localeCompare(a.publication_date));
+
+const name = jurisdictionLabels[iso ?? ""] ?? iso;
+---
+
+<Layout title={`${name} · Legalize PE`} description={`${norms.length} norms from ${name}`}>
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 lg:py-12">
+    <nav class="mb-8 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-foreground transition-colors">Home</a>
+      <span aria-hidden>/</span>
+      <a href="/regions" class="hover:text-foreground transition-colors">Regions</a>
+      <span aria-hidden>/</span>
+      <span class="text-foreground">{name}</span>
+    </nav>
+
+    <header class="mb-10 pb-8 border-b border-border/60">
+      <div class="flex items-center gap-2 mb-3">
+        <Badge variant="outline" className="font-id">{iso}</Badge>
+        <span class="text-xs text-muted-foreground">{norms.length} {norms.length === 1 ? "norm" : "norms"}</span>
+      </div>
+      <h1 class="text-4xl md:text-6xl tracking-tight leading-none">{name}</h1>
+    </header>
+
+    {norms.length === 0 ? (
+      <p class="text-muted-foreground">No norms yet. Coming in V2.</p>
+    ) : (
+      <ul class="divide-y divide-border/60 border border-border/60 rounded-xl overflow-hidden bg-card">
+        {norms.map((n) => (
+          <li>
+            <a
+              href={`/laws/${n.identifier.toLowerCase()}`}
+              class="flex items-start gap-4 px-5 py-4 hover:bg-accent/50 transition-colors group"
+            >
+              <div class="flex-1 min-w-0">
+                <Badge variant="outline" className="font-id text-xs mb-1.5">{n.identifier}</Badge>
+                <p class="text-sm leading-snug group-hover:text-foreground">{n.title.replace(/\.{2,}$/, "…")}</p>
+              </div>
+              {n.publication_date && (
+                <time datetime={n.publication_date} class="text-xs text-muted-foreground font-id shrink-0 mt-1">
+                  {n.publication_date}
+                </time>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</Layout>
