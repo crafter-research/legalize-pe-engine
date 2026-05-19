@@ -187,8 +187,16 @@ async function migrateOne(
 }
 
 function normalizeDate(input: unknown): string | null {
-  if (!input || typeof input !== "string") return null;
-  // Accept ISO YYYY-MM-DD, or Date-like
+  if (input == null) return null;
+
+  // gray-matter parses bare ISO-like YAML dates as JS Date objects.
+  if (input instanceof Date) {
+    if (Number.isNaN(input.getTime())) return null;
+    return input.toISOString().slice(0, 10);
+  }
+
+  if (typeof input !== "string") return null;
+
   const trimmed = input.trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
   const d = new Date(trimmed);
