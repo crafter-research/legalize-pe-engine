@@ -9,7 +9,7 @@ Pioneer slice with one regional government and the full national corpus migrated
 | Component | Status |
 |---|---|
 | Monorepo bootstrap (Turborepo + Bun + Biome) | Shipped |
-| National corpus migration (1,617 norms to SPEC v0.2) | Shipped |
+| National corpus migration to SPEC v0.2 | Shipped, 1,622 national Markdown files |
 | Cusco pioneer fetcher (5 ordenanzas regionales) | Shipped |
 | Web app live at https://legalize-pe.crafter.ing | Shipped |
 | PR to legalize-dev federation | Open, [PR #17](https://github.com/legalize-dev/legalize/pull/17) |

@@ -88,9 +88,9 @@ We will reconsider webctl when it ships a static-listing classifier.
 
 **Alternatives considered**:
 
-- (a) Block V1 release until every legacy date is verified. Rejected — would push the federation listing back weeks for a documentation quality issue, not a corpus integrity issue. The text of each norm is still correct; only the metadata date is suspect.
-- (b) Re-derive dates from the source URL via OCR on the original PDF. Rejected for V1 — most gov.pe PDFs are scans (verified during V1.4 detail-page work), so OCR would require Tesseract + per-source post-processing, which is V2 scope.
-- (c) Strip the questionable dates and ship `publication_date: null`. Rejected — SPEC v0.2 requires `publication_date`, and "null" is worse than "best-effort" for downstream consumers who can flag and verify.
+- (a) Block V1 release until every legacy date is verified. Rejected - would push the federation listing back weeks for a documentation quality issue, not a corpus integrity issue. The text of each norm is still correct; only the metadata date is suspect.
+- (b) Re-derive dates from the source URL via OCR on the original PDF. Rejected for V1 - most gov.pe PDFs are scans (verified during V1.4 detail-page work), so OCR would require Tesseract + per-source post-processing, which is V2 scope.
+- (c) Strip the questionable dates and ship `publication_date: null`. Rejected - SPEC v0.2 requires `publication_date`, and "null" is worse than "best-effort" for downstream consumers who can flag and verify.
 
 **Why this one**: the corpus is a snapshot, not a claim of authority. Downstream consumers can grep `publication_date: '2026-` and decide for themselves. The V2 re-scrape will rewrite the affected norms with a `[correction]` commit each, preserving the audit trail.
 

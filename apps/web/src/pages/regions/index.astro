@@ -1,10 +1,10 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRightIcon, MapPinIcon } from "lucide-react";
-import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { Badge } from "@/components/ui/badge";
+import Layout from "@/layouts/Layout.astro";
+import { collectAllNormFiles, parseFrontmatter } from "@/lib/laws";
+import { ArrowRightIcon } from "lucide-react";
 
 // Group by jurisdiction
 const byJurisdiction: Record<string, { count: number; sample?: string }> = {};

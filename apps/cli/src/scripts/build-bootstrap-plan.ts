@@ -9,10 +9,10 @@
  *   bun cli bootstrap-plan --corpus ../legalize-pe --out plan.tsv
  */
 
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { type SpecFrontmatter, gitSafeAuthorDate } from "@legalize-pe/core";
 import matter from "gray-matter";
-import { gitSafeAuthorDate, type SpecFrontmatter } from "@legalize-pe/core";
 
 export interface PlanOptions {
   corpusRoot: string;

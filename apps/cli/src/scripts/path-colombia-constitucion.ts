@@ -17,16 +17,16 @@
  *   bun cli path-colombia --corpus ../legalize-pe --dry-run
  */
 
-import { readdir, readFile, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
 import { execSync } from "node:child_process";
-import matter from "gray-matter";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import {
   CRAFTERNAUTA_EMAIL,
   CRAFTERNAUTA_NAME,
-  gitSafeAuthorDate,
   type SpecFrontmatter,
+  gitSafeAuthorDate,
 } from "@legalize-pe/core";
+import matter from "gray-matter";
 
 export interface PathColombiaOptions {
   corpusRoot: string;
@@ -68,9 +68,7 @@ export async function pathColombiaConstitucion(opts: PathColombiaOptions): Promi
   if (opts.dryRun) {
     console.log("\n[dry] reformas in chronological order:");
     for (const r of reformas) {
-      console.log(
-        `  ${r.publicationDate}  ${r.identifier}  arts=${r.affectedArticles.join(",")}`,
-      );
+      console.log(`  ${r.publicationDate}  ${r.identifier}  arts=${r.affectedArticles.join(",")}`);
     }
     return;
   }
@@ -96,9 +94,7 @@ export async function pathColombiaConstitucion(opts: PathColombiaOptions): Promi
 
     // Stage + commit
     const articlesSuffix =
-      r.affectedArticles.length > 0
-        ? ` arts. ${r.affectedArticles.join(", ")}`
-        : "";
+      r.affectedArticles.length > 0 ? ` arts. ${r.affectedArticles.join(", ")}` : "";
     const subject = `[reform] Constitución Política del Perú${articlesSuffix}`;
     const message = `${subject}
 
@@ -138,6 +134,6 @@ Norm-Id: CON-1993
   }
 
   console.log(`\n✓ Created ${count} [reform] commits on pe/CON-1993.md`);
-  console.log(`\nVerify with:`);
+  console.log("\nVerify with:");
   console.log(`  git -C ${corpusRoot} log --pretty="%h %ad %s" --date=short -- pe/CON-1993.md`);
 }

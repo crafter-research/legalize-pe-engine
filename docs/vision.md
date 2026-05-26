@@ -16,8 +16,8 @@ A citizen, lawyer, journalist, or AI agent that needs to know **which legal rule
 
 A two-repo system:
 
-- **Corpus** ([`crafter-research/legalize-pe`](https://github.com/crafter-research/legalize-pe)) — every Peruvian legal norm as a Markdown file with YAML frontmatter, following [SPEC v0.2](https://github.com/legalize-dev/legalize/blob/main/SPEC.md). Every reform is a git commit with the real publication date.
-- **Engine** (this repo) — the CLI, web app, scrapers, and recon IRs that produce and publish the corpus.
+- **Corpus** ([`crafter-research/legalize-pe`](https://github.com/crafter-research/legalize-pe)) - every Peruvian legal norm as a Markdown file with YAML frontmatter, following [SPEC v0.2](https://github.com/legalize-dev/legalize/blob/main/SPEC.md). Every reform is a git commit with the real publication date.
+- **Engine** (this repo) - the CLI, web app, scrapers, and recon IRs that produce and publish the corpus.
 
 The corpus is interoperable with the [legalize.dev federation](https://github.com/legalize-dev/legalize) (Korea-style listing). Anyone can:
 
@@ -55,7 +55,7 @@ Empirical work shows that Peruvian institutions classify their norms differently
 |---|---|
 | `GobPeFetcher` | Institutions that publish to `gob.pe/institucion/{slug}/normas-legales/tipos/{type_id}-{slug}` (confirmed: Lima Metropolitana, Cusco) |
 | `StaticDirectoryFetcher` | Apache directory listings or WordPress uploads with predictable PDF paths (confirmed: Tumbes, Moquegua) |
-| `CatalogCrossrefFetcher` | Portals returning HTTP 403 — discovery comes from the El Peruano CSV catalog (confirmed: Áncash, Puno) |
+| `CatalogCrossrefFetcher` | Portals returning HTTP 403 - discovery comes from the El Peruano CSV catalog (confirmed: Áncash, Puno) |
 
 ### Agent-first engineering
 

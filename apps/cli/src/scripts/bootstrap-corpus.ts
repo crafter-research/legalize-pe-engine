@@ -19,16 +19,16 @@
  *   bun cli bootstrap-corpus --corpus ../legalize-pe --limit 10  # quick test
  */
 
-import { readdir, readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { simpleGit } from "simple-git";
-import matter from "gray-matter";
 import {
   CRAFTERNAUTA_EMAIL,
   CRAFTERNAUTA_NAME,
-  gitSafeAuthorDate,
   type SpecFrontmatter,
+  gitSafeAuthorDate,
 } from "@legalize-pe/core";
+import matter from "gray-matter";
+import { simpleGit } from "simple-git";
 
 export interface BootstrapOptions {
   corpusRoot: string;

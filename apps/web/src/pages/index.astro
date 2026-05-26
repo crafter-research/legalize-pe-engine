@@ -1,30 +1,31 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  ArrowRightIcon,
-  CodeIcon,
-  GitCommitIcon,
-  GitForkIcon,
-  ScrollTextIcon,
-} from "lucide-react";
-import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Layout from "@/layouts/Layout.astro";
+import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import { ArrowRightIcon, CodeIcon, GitCommitIcon, GitForkIcon, ScrollTextIcon } from "lucide-react";
 
 const files = collectAllNormFiles();
 const stats = {
   total: files.length,
   national: files.filter((f) => f.absDir.endsWith("/pe")).length,
-  reformasConst: files.filter((f) => f.relativePath.startsWith("reformas-constitucionales/")).length,
+  reformasConst: files.filter((f) => f.relativePath.startsWith("reformas-constitucionales/"))
+    .length,
   regional: files.filter((f) => !f.absDir.endsWith("/pe")).length,
   jurisdictionsCovered: new Set(
     files.filter((f) => !f.absDir.endsWith("/pe")).map((f) => f.absDir.split("/").pop()),
   ).size,
 };
 
-type Norm = { identifier: string; title: string; rank: string; publication_date: string; jurisdiction: string };
+type Norm = {
+  identifier: string;
+  title: string;
+  rank: string;
+  publication_date: string;
+  jurisdiction: string;
+};
 const recent: Norm[] = [];
 for (const { absDir, relativePath } of files) {
   try {
@@ -64,14 +65,26 @@ const RANK_LABELS_EN: Record<string, string> = {
 const stat = [
   { label: "National norms", value: stats.national.toLocaleString(), hint: "Laws, DLeg, DS" },
   { label: "Const. reforms", value: stats.reformasConst.toLocaleString(), hint: "1995 → 2024" },
-  { label: "Regional norms", value: stats.regional.toLocaleString(), hint: "Ordenanzas" },
-  { label: "Jurisdictions", value: `${stats.jurisdictionsCovered}/27`, hint: "Tier 1 in progress" },
+  { label: "Regional norms", value: stats.regional.toLocaleString(), hint: "Cusco pioneer" },
+  { label: "Jurisdictions", value: `${stats.jurisdictionsCovered}/27`, hint: "Cusco covered" },
 ];
 
 const features = [
-  { Icon: GitCommitIcon, title: "Every reform is a commit", body: "The 1993 Constitution has 32 commits over the same file: one for the original text and one per amendment, dated correctly." },
-  { Icon: ScrollTextIcon, title: "Plain markdown, plain YAML", body: "No proprietary format. Every norm is a single .md file with eight standard frontmatter fields you can parse in any language." },
-  { Icon: CodeIcon, title: "For agents and humans", body: "Use it as LLM context, as research input, as a CLI argument, or browse it here. Public domain (DLeg 822 Art. 9)." },
+  {
+    Icon: GitCommitIcon,
+    title: "Every reform is a commit",
+    body: "The 1993 Constitution has 32 commits over the same file: one for the original text and one per amendment, dated correctly.",
+  },
+  {
+    Icon: ScrollTextIcon,
+    title: "Plain markdown, plain YAML",
+    body: "No proprietary format. Every norm is a single .md file with eight standard frontmatter fields you can parse in any language.",
+  },
+  {
+    Icon: CodeIcon,
+    title: "For agents and humans",
+    body: "Use it as LLM context, as research input, as a CLI argument, or browse it here. Public domain (DLeg 822 Art. 9).",
+  },
 ];
 ---
 

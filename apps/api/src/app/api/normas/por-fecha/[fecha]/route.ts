@@ -1,19 +1,19 @@
-import { db, schema } from '@/db'
-import { desc, eq } from 'drizzle-orm'
-import { type NextRequest, NextResponse } from 'next/server'
+import { db, schema } from "@/db";
+import { desc, eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ fecha: string }> },
 ) {
-  const { fecha } = await params
+  const { fecha } = await params;
 
   // Validate date format (YYYY-MM-DD)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
     return NextResponse.json(
-      { error: 'Formato de fecha inválido. Use YYYY-MM-DD' },
+      { error: "Formato de fecha inválido. Use YYYY-MM-DD" },
       { status: 400 },
-    )
+    );
   }
 
   try {
@@ -29,7 +29,7 @@ export async function GET(
       })
       .from(schema.normas)
       .where(eq(schema.normas.fechaPublicacion, fecha))
-      .orderBy(desc(schema.normas.rango))
+      .orderBy(desc(schema.normas.rango));
 
     return NextResponse.json({
       data: normas,
@@ -37,12 +37,9 @@ export async function GET(
         fecha,
         total: normas.length,
       },
-    })
+    });
   } catch (error) {
-    console.error('Error fetching normas by date:', error)
-    return NextResponse.json(
-      { error: 'Error al obtener las normas' },
-      { status: 500 },
-    )
+    console.error("Error fetching normas by date:", error);
+    return NextResponse.json({ error: "Error al obtener las normas" }, { status: 500 });
   }
 }

@@ -1,5 +1,3 @@
-import { CheckIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,6 +5,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CheckIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark" | "system";
 

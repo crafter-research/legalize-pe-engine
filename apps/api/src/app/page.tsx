@@ -6,5 +6,5 @@ export default function Home() {
         Visita <a href="/api/normas">/api/normas</a> para acceder al API.
       </p>
     </main>
-  )
+  );
 }

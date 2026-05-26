@@ -6,12 +6,23 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": ["node_modules", "dist", ".next", "data", "recon"]
+    "ignore": [
+      "node_modules",
+      "dist",
+      ".next",
+      "data",
+      "recon",
+      "apps/web/.astro",
+      "apps/web/public/search-index.json"
+    ]
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "a11y": {
+        "noLabelWithoutControl": "off"
+      }
     }
   },
   "formatter": {

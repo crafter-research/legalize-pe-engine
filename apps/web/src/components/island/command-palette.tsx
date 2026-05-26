@@ -1,3 +1,12 @@
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import Fuse from "fuse.js";
 import {
   ArrowRightIcon,
@@ -11,15 +20,6 @@ import {
   Settings2Icon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
 
 type Hit = {
   id: string;
@@ -158,11 +158,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
         {results.length > 0 && (
           <CommandGroup heading={`${results.length} match${results.length === 1 ? "" : "es"}`}>
             {results.map((h) => (
-              <CommandItem
-                key={h.id}
-                value={`${h.id} ${h.t}`}
-                onSelect={() => go(lawUrl(h))}
-              >
+              <CommandItem key={h.id} value={`${h.id} ${h.t}`} onSelect={() => go(lawUrl(h))}>
                 <FileTextIcon />
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="truncate text-sm">{h.t}</span>

@@ -5,15 +5,11 @@
  * Each fix produces a `[correction]` commit with Crafternauta identity.
  */
 
-import { readdir, readFile, writeFile } from "node:fs/promises";
 import { execSync } from "node:child_process";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { CRAFTERNAUTA_EMAIL, CRAFTERNAUTA_NAME, gitSafeAuthorDate } from "@legalize-pe/core";
 import matter from "gray-matter";
-import {
-  CRAFTERNAUTA_EMAIL,
-  CRAFTERNAUTA_NAME,
-  gitSafeAuthorDate,
-} from "@legalize-pe/core";
 
 const CORPUS = resolve("../legalize-pe");
 const PE_CUS = join(CORPUS, "pe-cus");
