@@ -1,13 +1,13 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import { readFileSync } from "node:fs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, ExternalLinkIcon, FileTextIcon, GitCommitIcon } from "lucide-react";
-import { marked } from "marked";
-import { readFileSync } from "node:fs";
+import Layout from "@/layouts/Layout.astro";
 import { buildIdToFileMap, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { formatDateLong } from "@/lib/utils";
+import { CalendarIcon, ExternalLinkIcon, FileTextIcon, GitCommitIcon } from "lucide-react";
+import { marked } from "marked";
 
 export async function getStaticPaths() {
   const idToFile = buildIdToFileMap();
@@ -28,21 +28,22 @@ const titleIsTruncated = /\.{2,}$/.test(rawTitle);
 const cleanTitle = titleIsTruncated ? rawTitle.replace(/\s*\.{2,}\s*$/, "…") : rawTitle;
 
 // Date precision: V1 sub-national norms may have year-only estimates
-const datePrecision = ((meta as any).date_precision as string | undefined) ?? "day";
-const dateNote = ((meta as any).notes as string | undefined) ?? "";
-
+const datePrecision = meta.date_precision ?? "day";
 // Strip the first H1 from the body if it duplicates the frontmatter title.
 const bodyStripped = body.replace(/^\s*#\s+.+\n+/, "");
 
 marked.use({
   renderer: {
-    heading({ tokens, depth }: any) {
+    heading(
+      this: { parser: { parseInline(tokens: Array<{ raw?: string }>): string } },
+      { tokens, depth }: { tokens: Array<{ raw?: string }>; depth: number },
+    ) {
       const text = this.parser.parseInline(tokens);
-      const rawText = tokens.map((t: any) => t.raw || "").join("");
+      const rawText = tokens.map((t) => t.raw || "").join("");
       const slug = rawText
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
+        .replace(/\p{M}/gu, "")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
       return `<h${depth} id="${slug}">${text}</h${depth}>\n`;
@@ -78,7 +79,7 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 const status = STATUS_META[meta.status] ?? STATUS_META.in_force;
 const rankLabel = RANK_LABELS_EN[meta.rank] ?? meta.rank;
 const jurisLabel = jurisdictionLabels[meta.jurisdiction ?? "pe"] ?? meta.jurisdiction ?? "Nacional";
-const appliedReforms = (meta as any).applied_reforms as string[] | undefined;
+const appliedReforms = meta.applied_reforms;
 const hasTimeline = Array.isArray(appliedReforms) && appliedReforms.length > 0;
 const wordCount = bodyStripped.trim().split(/\s+/).length;
 const readMinutes = Math.max(1, Math.round(wordCount / 220));

@@ -3,7 +3,7 @@
  * Spawns the binary, captures stdout, parses JSON when applicable.
  */
 
-import { spawn } from "node:child_process";
+import { execFile } from "node:child_process";
 
 interface SpawnResult {
   stdout: string;
@@ -12,20 +12,16 @@ interface SpawnResult {
 }
 
 async function run(args: string[]): Promise<SpawnResult> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn("agent-browser", args, { stdio: ["ignore", "pipe", "pipe"] });
-    let stdout = "";
-    let stderr = "";
-    proc.stdout?.on("data", (d) => {
-      stdout += d.toString();
-    });
-    proc.stderr?.on("data", (d) => {
-      stderr += d.toString();
-    });
-    proc.on("error", reject);
-    proc.on("close", (code) => {
-      resolve({ stdout, stderr, exitCode: code ?? 0 });
-    });
+  return new Promise((resolve) => {
+    execFile(
+      "agent-browser",
+      args,
+      { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        const exitCode = error ? (typeof error.code === "number" ? error.code : 1) : 0;
+        resolve({ stdout, stderr: stderr || error?.message || "", exitCode });
+      },
+    );
   });
 }
 

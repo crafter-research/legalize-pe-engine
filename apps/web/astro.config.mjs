@@ -6,7 +6,7 @@ import AstroPWA from "@vite-pwa/astro";
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  site: "https://legalize.crafter.ing",
+  site: "https://legalize-pe.crafter.ing",
   output: "static",
   adapter: vercel({ imageService: "passthrough" }),
   vite: {
@@ -30,7 +30,12 @@ export default defineConfig({
         icons: [
           { src: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
           { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-          { src: "/icons/icon-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          {
+            src: "/icons/icon-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
         ],
       },
       workbox: {
@@ -54,7 +59,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/legalize\.crafter\.ing\/(laws)?$/,
+            urlPattern: /^https:\/\/legalize-pe\.crafter\.ing\/(laws)?$/,
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "pages",
@@ -62,7 +67,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/legalize\.crafter\.ing\/laws\/.+$/,
+            urlPattern: /^https:\/\/legalize-pe\.crafter\.ing\/laws\/.+$/,
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "law-pages",
@@ -70,7 +75,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/legalize\.crafter\.ing\/api\//,
+            urlPattern: /^https:\/\/legalize-pe\.crafter\.ing\/api\//,
             handler: "NetworkFirst",
             options: {
               cacheName: "api",

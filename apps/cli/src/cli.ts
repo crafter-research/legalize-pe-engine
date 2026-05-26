@@ -34,62 +34,70 @@ program
 
 program
   .command("fetch-all")
-  .description("Fetch norms for a jurisdiction using its IR. Writes files + a TSV plan for the commit loop.")
+  .description(
+    "Fetch norms for a jurisdiction using its IR. Writes files + a TSV plan for the commit loop.",
+  )
   .requiredOption("-j, --jurisdiction <slug>", "Jurisdiction slug, e.g. regioncusco")
   .option("-l, --limit <n>", "Max norms to fetch", "5")
   .option("--corpus <path>", "Path to corpus repo", "../legalize-pe")
   .option("--plan-out <path>", "TSV plan output for bash commit loop", "./fetch-plan.tsv")
-  .action(async (opts: { jurisdiction: string; limit: string; corpus: string; planOut: string }) => {
-    const { writeFile, mkdir } = await import("node:fs/promises");
-    const { join, dirname } = await import("node:path");
-    const matter = (await import("gray-matter")).default;
+  .action(
+    async (opts: { jurisdiction: string; limit: string; corpus: string; planOut: string }) => {
+      const { writeFile, mkdir } = await import("node:fs/promises");
+      const { join, dirname } = await import("node:path");
+      const matter = (await import("gray-matter")).default;
 
-    const irPath = resolve(`recon/${opts.jurisdiction}.ir.json`);
-    const ir = JSON.parse(await readFile(irPath, "utf-8"));
-    const corpusRoot = resolve(opts.corpus);
+      const irPath = resolve(`recon/${opts.jurisdiction}.ir.json`);
+      const ir = JSON.parse(await readFile(irPath, "utf-8"));
+      const corpusRoot = resolve(opts.corpus);
 
-    const { GobPeFetcher } = await import("@legalize-pe/jurisdictions");
+      const { GobPeFetcher } = await import("@legalize-pe/jurisdictions");
 
-    const rankByJurisdiction: Record<string, string> = {
-      regioncusco: "ordenanza_regional",
-      munilima: "ordenanza_municipal",
-    };
-    const rankCode = rankByJurisdiction[opts.jurisdiction] ?? "ordenanza_regional";
+      const rankByJurisdiction: Record<string, string> = {
+        regioncusco: "ordenanza_regional",
+        munilima: "ordenanza_municipal",
+      };
+      const rankCode = rankByJurisdiction[opts.jurisdiction] ?? "ordenanza_regional";
 
-    const fetcher = new GobPeFetcher({ ir, rankCode });
-    await fetcher.ensureReady();
+      const fetcher = new GobPeFetcher({ ir, rankCode });
+      await fetcher.ensureReady();
 
-    const items = await fetcher.discoverListing(Number(opts.limit));
-    console.log(`Discovered ${items.length} items from ${ir.listing.url}`);
+      const items = await fetcher.discoverListing(Number(opts.limit));
+      console.log(`Discovered ${items.length} items from ${ir.listing.url}`);
 
-    if (items.length === 0) {
-      console.log("Nothing to write. Exiting.");
-      return;
-    }
+      if (items.length === 0) {
+        console.log("Nothing to write. Exiting.");
+        return;
+      }
 
-    const planRows: string[] = [];
-    const today = new Date().toISOString().slice(0, 10);
+      const planRows: string[] = [];
+      const today = new Date().toISOString().slice(0, 10);
 
-    for (const item of items) {
-      const fm = fetcher.buildFrontmatter(item, today);
-      const body = `# ${fm.title}\n\n${item.pdf_url ? `[PDF original](${item.pdf_url})\n\n` : ""}*Fuente:* ${item.detail_url}\n`;
-      const content = matter.stringify(body, fm as unknown as Record<string, unknown>);
+      for (const item of items) {
+        const fm = fetcher.buildFrontmatter(item, today);
+        const body = `# ${fm.title}\n\n${item.pdf_url ? `[PDF original](${item.pdf_url})\n\n` : ""}*Fuente:* ${item.detail_url}\n`;
+        const content = matter.stringify(body, fm as unknown as Record<string, unknown>);
 
-      const relPath = `${fm.jurisdiction}/${fm.identifier}.md`;
-      const absPath = join(corpusRoot, relPath);
-      await mkdir(dirname(absPath), { recursive: true });
-      await writeFile(absPath, content, "utf-8");
+        const relPath = `${fm.jurisdiction}/${fm.identifier}.md`;
+        const absPath = join(corpusRoot, relPath);
+        await mkdir(dirname(absPath), { recursive: true });
+        await writeFile(absPath, content, "utf-8");
 
-      const safeTitle = fm.title.replace(/[\t\n\r]/g, " ").trim();
-      planRows.push([relPath, fm.identifier, safeTitle, today, `${today}T00:00:00Z`, today.slice(0, 4)].join("\t"));
-      console.log(`✓ wrote ${relPath}`);
-    }
+        const safeTitle = fm.title.replace(/[\t\n\r]/g, " ").trim();
+        planRows.push(
+          [relPath, fm.identifier, safeTitle, today, `${today}T00:00:00Z`, today.slice(0, 4)].join(
+            "\t",
+          ),
+        );
+        console.log(`✓ wrote ${relPath}`);
+      }
 
-    await writeFile(resolve(opts.planOut), `${planRows.join("\n")}\n`, "utf-8");
-    console.log(`\nWrote ${planRows.length} rows to ${opts.planOut}`);
-    console.log(`Now commit with:`);
-    console.log(`  ./apps/cli/src/scripts/run-bootstrap.sh ${opts.corpus} ${opts.planOut}`);
-  });
+      await writeFile(resolve(opts.planOut), `${planRows.join("\n")}\n`, "utf-8");
+      console.log(`\nWrote ${planRows.length} rows to ${opts.planOut}`);
+      console.log("Now commit with:");
+      console.log(`  ./apps/cli/src/scripts/run-bootstrap.sh ${opts.corpus} ${opts.planOut}`);
+    },
+  );
 
 program
   .command("migrate")
@@ -121,19 +129,19 @@ program
   .description("Build timeline of 32 commits over pe/CON-1993.md (bootstrap + 31 reformas)")
   .option("--corpus <path>", "Path to corpus repo", "../legalize-pe")
   .option("--dry-run", "Print plan without writing")
-  .option("--plan-out <path>", "TSV plan output for bash commit loop", "./path-colombia-plan.tsv")
-  .action(async (opts: { corpus: string; dryRun?: boolean; planOut: string }) => {
+  .action(async (opts: { corpus: string; dryRun?: boolean }) => {
     const { pathColombiaConstitucion } = await import("./scripts/path-colombia-constitucion.ts");
     await pathColombiaConstitucion({
       corpusRoot: resolve(opts.corpus),
       dryRun: !!opts.dryRun,
-      planOut: opts.planOut,
     });
   });
 
 program
   .command("bootstrap-plan")
-  .description("Generate TSV plan (relativePath, identifier, title, date, year) to be consumed by bash loop")
+  .description(
+    "Generate TSV plan (relativePath, identifier, title, date, year) to be consumed by bash loop",
+  )
   .option("--corpus <path>", "Path to corpus repo", "../legalize-pe")
   .option("--out <path>", "Output TSV path", "./bootstrap-plan.tsv")
   .option("--limit <n>", "Limit to first N rows")

@@ -52,7 +52,8 @@ export function buildNewIdentifier(input: {
   publicationDate?: string;
 }): string {
   // Special-case mapping wins
-  if (SPECIAL_IDENTIFIERS[input.oldId]) return SPECIAL_IDENTIFIERS[input.oldId]!;
+  const specialIdentifier = SPECIAL_IDENTIFIERS[input.oldId];
+  if (specialIdentifier) return specialIdentifier;
 
   const year = input.publicationDate?.slice(0, 4) ?? "UNKNOWN";
 

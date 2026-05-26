@@ -73,7 +73,7 @@ export class GobPeFetcher {
    */
   private deriveIdentifier(item: ListingItem): string {
     const m = item.detail_url.match(/\/normas-legales\/\d+-([A-Za-z0-9-]+)/);
-    if (m && m[1]) {
+    if (m?.[1]) {
       return m[1].toUpperCase();
     }
     // Last-ditch: use whole path tail

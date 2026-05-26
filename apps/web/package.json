@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "bun scripts/generate-search-index.ts",
+    "prebuild": "bun scripts/ensure-corpus.ts && bun scripts/generate-search-index.ts",
     "build": "astro build",
     "preview": "astro preview",
     "typecheck": "astro check && tsc --noEmit"

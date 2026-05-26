@@ -1,10 +1,9 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeftIcon } from "lucide-react";
-import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { Badge } from "@/components/ui/badge";
+import Layout from "@/layouts/Layout.astro";
+import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 
 export async function getStaticPaths() {
   const seen = new Set<string>();

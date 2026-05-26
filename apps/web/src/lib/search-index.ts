@@ -17,10 +17,14 @@ export interface CompactLaw {
   t: string; // title
   r: string; // rank
   s?: string; // status (omit if 'in_force')
+  e?: string;
   f: string; // publication_date
-  j: string; // jurisdiction (e.g. "pe", "pe-cus")
+  j?: string; // jurisdiction (e.g. "pe", "pe-cus")
   b: string; // body preview (cleaned)
+  m?: string[];
 }
+
+export type CompactLey = CompactLaw;
 
 function cleanBodyForSearch(body: string): string {
   return (
@@ -71,9 +75,7 @@ export function buildSearchIndex(): SearchableLaw[] {
     });
   }
 
-  return laws.sort((a, b) =>
-    (b.publication_date ?? "").localeCompare(a.publication_date ?? ""),
-  );
+  return laws.sort((a, b) => (b.publication_date ?? "").localeCompare(a.publication_date ?? ""));
 }
 
 export function buildCompactSearchIndex(): CompactLaw[] {

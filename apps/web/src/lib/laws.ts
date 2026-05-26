@@ -22,6 +22,9 @@ export interface LeyFrontmatter {
   official_journal?: string;
   gazette_reference?: string;
   affected_articles?: string[];
+  applied_reforms?: string[];
+  date_precision?: "day" | "month" | "year";
+  notes?: string;
   gob_pe_slug?: string;
   pdf_url?: string;
   el_peruano_id?: number;
@@ -88,7 +91,9 @@ export function buildIdToFileMap(_dirOrUnused?: string): Map<string, string> {
  */
 export const CORPUS_REPO = process.env.LEGALIZE_PE_CORPUS
   ? process.env.LEGALIZE_PE_CORPUS
-  : join(process.cwd(), "../../../legalize-pe");
+  : process.env.VERCEL
+    ? join(process.cwd(), ".cache/legalize-pe")
+    : join(process.cwd(), "../../../legalize-pe");
 
 /** Path to national pe/ directory (for back-compat — most builds read all jurisdictions via collectAllNormFiles). */
 export const LAWS_DIR = join(CORPUS_REPO, "pe");

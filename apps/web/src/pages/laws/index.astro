@@ -1,19 +1,17 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { FilterIcon, SearchIcon } from "lucide-react";
+import Layout from "@/layouts/Layout.astro";
 import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { FilterIcon, SearchIcon } from "lucide-react";
 
 type Norm = {
   identifier: string;

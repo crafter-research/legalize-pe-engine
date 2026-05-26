@@ -10,3 +10,6 @@ data/raw/
 data/cache/
 .cache/
 .vercel
+*.tsbuildinfo
+*.db
+*.db-journal

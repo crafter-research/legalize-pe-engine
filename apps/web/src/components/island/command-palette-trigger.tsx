@@ -1,7 +1,7 @@
-import { SearchIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { SearchIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { CommandPalette } from "./command-palette";
 
 export function CommandPaletteTrigger() {

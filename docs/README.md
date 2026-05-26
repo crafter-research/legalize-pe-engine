@@ -29,7 +29,7 @@ bun cli --help
 | Slice | Status |
 |---|---|
 | V1.1 Monorepo bootstrap + corpus split | Shipped |
-| V1.2 National corpus migration to SPEC v0.2 (1,617 norms) | Shipped |
+| V1.2 National corpus migration to SPEC v0.2 | Shipped, 1,622 national Markdown files |
 | V1.3 Cusco pioneer fetcher (5 ordenanzas) | Shipped |
 | V1.4 Web app migration (Astro + PWA) | Shipped, live at legalize-pe.crafter.ing |
 | V1.5 PR to legalize-dev federation | Open, [PR #17](https://github.com/legalize-dev/legalize/pull/17) |
