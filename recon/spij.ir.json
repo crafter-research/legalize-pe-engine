@@ -60,14 +60,10 @@
     "body_shape_TBD": { "filtros": "...", "facetsSeleccionadas": "..." }
   },
   "enumeration_strategy": {
-    "note": "Because buscar is paywalled, enumerate norm IDs WITHOUT it:",
-    "options": [
-      "1. Free-tier browse endpoints behind 'LEGISLACION POR MATERIA' and 'GOBIERNOS LOCALES Y REGIONALES' buttons — capture those listing calls next (they likely return id lists the free user CAN see).",
-      "2. Curated codes: the inicio page links all Codigos + Constitucion via #/detallenorma/{id} — scrape those H-ids directly, the high-value national core.",
-      "3. Cross-map the datos abiertos catalog (186K post-2013 rows: dispositivo+numero+fecha) — needs a SPIJ-id resolver; detallenorma has no reverse lookup, so this requires the browse/listing endpoint or buscar.",
-      "4. Evaluate a paid SPIJ account if buscar is the only complete enumerator — but free service since Nov 2024 suggests browse listings exist."
-    ],
-    "next_capture": "agent-browser session clicking 'LEGISLACION POR MATERIA' / 'GOBIERNOS LOCALES Y REGIONALES' with HAR on — capture the listing endpoint that feeds those trees."
+    "note": "RESOLVED 2026-06-09. buscar is paywalled, but the materia index is a free-tier recursive crawl that covers the national tier:",
+    "confirmed_path": "CRAWL: seed H682710 ('Legislacion por Materia') -> textoCompleto links to ~93 compendio norms -> each compendio links to the real norms. Recurse detallenorma, extract H-ids from textoCompleto, dedup. Implemented in apps/cli/src/scripts/spij-crawl.ts (`spij crawl`). Verified: depth-1 -> 93 compendios.",
+    "scope_finding": "SPIJ free-access = NATIONAL tier ONLY. The 'GOBIERNOS LOCALES Y REGIONALES' button opens a SEARCH FORM (region/sector filters) routing through the PAYWALLED api/buscar — there is NO free regional index norm. Regional + municipal tiers come from gob.pe fetchers + datos abiertos catalog per docs/full-coverage-strategy.md, NOT SPIJ.",
+    "also_available": "Curated codes (Constitucion + all Codigos) are linked directly from the inicio page as #/detallenorma/{H-id} — highest-value national core, fetchable immediately."
   },
   "politeness": {
     "rate": "~1 req/s off-peak",
