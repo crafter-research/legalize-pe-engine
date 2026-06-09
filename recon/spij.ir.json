@@ -1,0 +1,77 @@
+{
+  "$comment": "SPIJ recon IR — captured 2026-06-09 via agent-browser HAR + direct curl. Drop into legalize-pe-engine/recon/spij.ir.json when wiring the SPIJ fetcher. Confirmed contracts marked confirmed:true; enumeration path is TBD (see notes).",
+  "jurisdiction": "pe",
+  "tier": "national",
+  "source": "SPIJ — Sistema Peruano de Información Jurídica (MINJUSDH)",
+  "spa": "https://spij.minjus.gob.pe/spij-ext-web/#/inicio",
+  "backends": {
+    "back": "https://spijwsii.minjus.gob.pe/spij-ext-back",
+    "solr": "https://spijwsii.minjus.gob.pe/spij-ext-solr"
+  },
+  "auth": {
+    "confirmed": true,
+    "note": "Hardcoded service creds, no captcha, no human login. JWT HS256, sub=spijext tipo=0, exp=+24h. Re-auth every <24h.",
+    "back_token": {
+      "method": "POST",
+      "url": "{back}/authenticate",
+      "body": { "usuario": "spijext", "clave": "password", "tipo": 0 },
+      "response_path": "value"
+    },
+    "solr_token": {
+      "method": "POST",
+      "url": "{solr}/authenticate",
+      "body": { "usuario": "spijext", "clave": "password" },
+      "response_path": "value"
+    },
+    "header": "Authorization: Bearer {token}"
+  },
+  "detail": {
+    "confirmed": true,
+    "note": "THE goldmine. Works for ANY norm id with the free back-token. Returns full structured norm: real publication date + full body text. No OCR needed for the national tier.",
+    "method": "GET",
+    "url": "{back}/api/detallenorma/{normaId}",
+    "id_format": "H-prefixed, e.g. H682684 (Codigo Civil)",
+    "response_fields": {
+      "id": "H682684",
+      "codigoNorma": "Nº 295",
+      "dispositivoLegal": "DECRETO LEGISLATIVO (-> SPEC rank via maestros)",
+      "sumilla": "title HTML",
+      "titulo": "<Campo no disponible> (often empty; use sumilla)",
+      "fechaPublicacion": "1984-07-25 (REAL date — solves ADR-10 date debt)",
+      "sector": "DECRETOS LEGISLATIVOS",
+      "ruta": "hierarchy path (CONSTITUCION...\\CODIGOS)",
+      "textoCompleto": "full HTML body — parse via packages/parser HTML->MD",
+      "migrado": "0"
+    }
+  },
+  "taxonomy": {
+    "confirmed": true,
+    "note": "Free-tier accessible. Use api/maestros for dispositivoLegal->SPEC-rank map; sector/agrupamiento are search facets.",
+    "maestros": { "method": "GET", "url": "{back}/api/maestros", "returns": "dispositivolegal[] enum" },
+    "sector": { "method": "GET", "url": "{back}/api/sector", "returns": "sectores[] tree" },
+    "agrupamiento": { "method": "GET", "url": "{back}/api/agrupamiento", "returns": "agrupamientoNormas[]" }
+  },
+  "search": {
+    "confirmed": false,
+    "note": "PAYWALL FINDING: api/buscar is gated for the anonymous tier. Console shows tipoUsuario=usuariogratuito and the HTTP call NEVER fires for free users (client-side block). Param shape observed in console: {filtros, facetsSeleccionadas}. Do NOT rely on buscar for enumeration with the free token.",
+    "method": "POST",
+    "url": "{solr}/api/buscar",
+    "auth": "solr-token",
+    "body_shape_TBD": { "filtros": "...", "facetsSeleccionadas": "..." }
+  },
+  "enumeration_strategy": {
+    "note": "Because buscar is paywalled, enumerate norm IDs WITHOUT it:",
+    "options": [
+      "1. Free-tier browse endpoints behind 'LEGISLACION POR MATERIA' and 'GOBIERNOS LOCALES Y REGIONALES' buttons — capture those listing calls next (they likely return id lists the free user CAN see).",
+      "2. Curated codes: the inicio page links all Codigos + Constitucion via #/detallenorma/{id} — scrape those H-ids directly, the high-value national core.",
+      "3. Cross-map the datos abiertos catalog (186K post-2013 rows: dispositivo+numero+fecha) — needs a SPIJ-id resolver; detallenorma has no reverse lookup, so this requires the browse/listing endpoint or buscar.",
+      "4. Evaluate a paid SPIJ account if buscar is the only complete enumerator — but free service since Nov 2024 suggests browse listings exist."
+    ],
+    "next_capture": "agent-browser session clicking 'LEGISLACION POR MATERIA' / 'GOBIERNOS LOCALES Y REGIONALES' with HAR on — capture the listing endpoint that feeds those trees."
+  },
+  "politeness": {
+    "rate": "~1 req/s off-peak",
+    "legal_basis": "DLeg 822 Art.9 (official texts public domain); SPIJ free since Nov 2024",
+    "checkpoint": "resumable per-id; persist fetched ids"
+  }
+}
