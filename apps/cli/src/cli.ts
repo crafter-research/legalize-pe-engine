@@ -184,4 +184,28 @@ spij
     });
   });
 
+const catalog = program
+  .command("catalog")
+  .description("Datos Abiertos catalog — coverage denominator + CatalogCrossrefFetcher data");
+
+catalog
+  .command("ingest")
+  .description("Load the El Peruano dispositivos-legales CSV into a SQLite DB")
+  .requiredOption("--csv <path>", "Path to a DatosAbiertos_Periodo_*.CSV file")
+  .option("--db <path>", "SQLite output path", "data/catalog.db")
+  .action(async (opts: { csv: string; db: string }) => {
+    const { runCatalogIngest } = await import("./scripts/catalog-ingest.ts");
+    await runCatalogIngest({ csv: resolve(opts.csv), db: resolve(opts.db) });
+  });
+
+catalog
+  .command("coverage")
+  .description("Compare corpus files vs catalog rows per jurisdiction -> data/catalog-coverage.json")
+  .option("--db <path>", "SQLite DB from `catalog ingest`", "data/catalog.db")
+  .option("--corpus <path>", "Corpus repo path", "../legalize-pe")
+  .action(async (opts: { db: string; corpus: string }) => {
+    const { runCatalogCoverage } = await import("./scripts/catalog-ingest.ts");
+    await runCatalogCoverage({ db: resolve(opts.db), corpus: resolve(opts.corpus) });
+  });
+
 program.parse();

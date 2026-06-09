@@ -1,0 +1,160 @@
+{
+  "generated_at": "2026-06-09T23:55:35.498Z",
+  "note": "Numerator = corpus *.md files. Denominator = El Peruano catalog rows 2013-2022 (a FLOOR — pre-2013 and post-2022 norms exist beyond this). Use as a directional coverage gauge, not an absolute %.",
+  "nacional": {
+    "corpus": 1591,
+    "catalog_2013_22": 158954
+  },
+  "regional": [
+    {
+      "iso": "pe-are",
+      "corpus": 0,
+      "catalog_2013_22": 795,
+      "pct": 0
+    },
+    {
+      "iso": "pe-lal",
+      "corpus": 0,
+      "catalog_2013_22": 454,
+      "pct": 0
+    },
+    {
+      "iso": "pe-piu",
+      "corpus": 0,
+      "catalog_2013_22": 366,
+      "pct": 0
+    },
+    {
+      "iso": "pe-huc",
+      "corpus": 0,
+      "catalog_2013_22": 311,
+      "pct": 0
+    },
+    {
+      "iso": "pe-sam",
+      "corpus": 0,
+      "catalog_2013_22": 304,
+      "pct": 0
+    },
+    {
+      "iso": "pe-tac",
+      "corpus": 0,
+      "catalog_2013_22": 286,
+      "pct": 0
+    },
+    {
+      "iso": "pe-uca",
+      "corpus": 0,
+      "catalog_2013_22": 265,
+      "pct": 0
+    },
+    {
+      "iso": "pe-lim",
+      "corpus": 0,
+      "catalog_2013_22": 263,
+      "pct": 0
+    },
+    {
+      "iso": "pe-cal",
+      "corpus": 0,
+      "catalog_2013_22": 259,
+      "pct": 0
+    },
+    {
+      "iso": "pe-jun",
+      "corpus": 0,
+      "catalog_2013_22": 253,
+      "pct": 0
+    },
+    {
+      "iso": "pe-moq",
+      "corpus": 0,
+      "catalog_2013_22": 236,
+      "pct": 0
+    },
+    {
+      "iso": "pe-lam",
+      "corpus": 0,
+      "catalog_2013_22": 232,
+      "pct": 0
+    },
+    {
+      "iso": "pe-ama",
+      "corpus": 0,
+      "catalog_2013_22": 231,
+      "pct": 0
+    },
+    {
+      "iso": "pe-ica",
+      "corpus": 0,
+      "catalog_2013_22": 190,
+      "pct": 0
+    },
+    {
+      "iso": "pe-caj",
+      "corpus": 0,
+      "catalog_2013_22": 187,
+      "pct": 0
+    },
+    {
+      "iso": "pe-cus",
+      "corpus": 5,
+      "catalog_2013_22": 160,
+      "pct": 3.1
+    },
+    {
+      "iso": "pe-lor",
+      "corpus": 0,
+      "catalog_2013_22": 155,
+      "pct": 0
+    },
+    {
+      "iso": "pe-pas",
+      "corpus": 0,
+      "catalog_2013_22": 151,
+      "pct": 0
+    },
+    {
+      "iso": "pe-aya",
+      "corpus": 0,
+      "catalog_2013_22": 149,
+      "pct": 0
+    },
+    {
+      "iso": "pe-mdd",
+      "corpus": 0,
+      "catalog_2013_22": 138,
+      "pct": 0
+    },
+    {
+      "iso": "pe-tum",
+      "corpus": 0,
+      "catalog_2013_22": 119,
+      "pct": 0
+    },
+    {
+      "iso": "pe-anc",
+      "corpus": 0,
+      "catalog_2013_22": 103,
+      "pct": 0
+    },
+    {
+      "iso": "pe-huv",
+      "corpus": 0,
+      "catalog_2013_22": 100,
+      "pct": 0
+    },
+    {
+      "iso": "pe-pun",
+      "corpus": 0,
+      "catalog_2013_22": 95,
+      "pct": 0
+    },
+    {
+      "iso": "pe-apu",
+      "corpus": 0,
+      "catalog_2013_22": 63,
+      "pct": 0
+    }
+  ]
+}
