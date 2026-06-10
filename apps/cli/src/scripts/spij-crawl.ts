@@ -109,6 +109,16 @@ async function getDetalleWithRetry(id: string, state: { token: string }): Promis
   throw lastError;
 }
 
+/**
+ * True if a commit error looks like a git lock / index contention issue
+ * (e.g. a stale `.git/index.lock`). These are fatal to a serial crawl because
+ * every subsequent commit will hit the same lock, so we re-throw with guidance
+ * instead of dropping the norm into the publish-failed bucket.
+ */
+export function isGitLockError(msg: string): boolean {
+  return /index\.lock|unable to create|\.lock'?$/i.test(msg);
+}
+
 function extractIds(html: string | null): string[] {
   if (!html) return [];
   return [...new Set((html.match(ID_RE) ?? []).map((s) => s.toUpperCase()))];
@@ -194,6 +204,7 @@ interface Registry {
   skipped_existing_ids?: string[];
   date_rejected_ids?: string[];
   empty_body_ids?: string[];
+  publish_failed_ids?: string[];
   failed_ids?: Record<string, string>;
 }
 
@@ -203,6 +214,7 @@ interface CrawlStats {
   skippedExisting: number;
   dateRejected: number;
   emptyBody: number;
+  publishFailed: number;
   failed: number;
 }
 
@@ -220,6 +232,7 @@ function buildRegistry(input: {
   skippedExistingIds: Set<string>;
   dateRejectedIds: Set<string>;
   emptyBodyIds: Set<string>;
+  publishFailedIds: Set<string>;
   failedIds: Record<string, string>;
 }): Registry {
   return {
@@ -232,6 +245,7 @@ function buildRegistry(input: {
     skipped_existing_ids: [...input.skippedExistingIds].sort(),
     date_rejected_ids: [...input.dateRejectedIds].sort(),
     empty_body_ids: [...input.emptyBodyIds].sort(),
+    publish_failed_ids: [...input.publishFailedIds].sort(),
     failed_ids: input.failedIds,
   };
 }
@@ -267,6 +281,7 @@ async function crawlInternal(opts: {
   const skippedExistingIds = new Set<string>();
   const dateRejectedIds = new Set<string>();
   const emptyBodyIds = new Set<string>();
+  const publishFailedIds = new Set<string>();
   const failedIds: Record<string, string> = {};
   const stats: CrawlStats = {
     fetched: 0,
@@ -274,6 +289,7 @@ async function crawlInternal(opts: {
     skippedExisting: 0,
     dateRejected: 0,
     emptyBody: 0,
+    publishFailed: 0,
     failed: 0,
   };
   const queue: string[] = [];
@@ -331,23 +347,35 @@ async function crawlInternal(opts: {
         skippedExistingIds.add(id);
         stats.skippedExisting++;
       } else {
-        await publisher.commitNorm({
-          corpusRoot: opts.corpus,
-          relativePath,
-          frontmatter: norm.frontmatter,
-          body: norm.body,
-          commit: {
-            type: "new",
-            title: norm.frontmatter.title,
-            trailers: {
-              "Source-Id": norm._spij_id,
-              "Source-Date": norm.frontmatter.publication_date,
-              "Norm-Id": norm._norm_id,
+        try {
+          await publisher.commitNorm({
+            corpusRoot: opts.corpus,
+            relativePath,
+            frontmatter: norm.frontmatter,
+            body: norm.body,
+            commit: {
+              type: "new",
+              title: norm.frontmatter.title,
+              trailers: {
+                "Source-Id": norm._spij_id,
+                "Source-Date": norm.frontmatter.publication_date,
+                "Norm-Id": norm._norm_id,
+              },
             },
-          },
-        });
-        publishedIds.add(id);
-        stats.published++;
+          });
+          publishedIds.add(id);
+          stats.published++;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (isGitLockError(msg)) {
+            throw new Error(
+              `git lock detected while committing ${id}: ${msg}. Remove .git/index.lock in the corpus and re-run (the crawl is resumable).`,
+            );
+          }
+          publishFailedIds.add(id);
+          stats.publishFailed++;
+          console.error(`[spij] publish failed for ${id}: ${msg}`);
+        }
       }
     }
 
@@ -363,6 +391,7 @@ async function crawlInternal(opts: {
           skippedExistingIds,
           dateRejectedIds,
           emptyBodyIds,
+          publishFailedIds,
           failedIds,
         }),
       );
@@ -379,6 +408,7 @@ async function crawlInternal(opts: {
     skippedExistingIds,
     dateRejectedIds,
     emptyBodyIds,
+    publishFailedIds,
     failedIds,
   });
   return {
@@ -451,7 +481,7 @@ export async function runCrawl(opts: {
   const reg = result.registry;
   await writeFile(opts.out, JSON.stringify(reg, null, 2));
   console.log(
-    `\n[spij] done. index_nodes=${reg.index_ids.length} norms=${reg.norm_ids.length} published=${result.stats.published} skipped_existing=${result.stats.skippedExisting} date_rejected=${result.stats.dateRejected} empty_body=${result.stats.emptyBody} failed=${result.stats.failed} -> ${opts.out}`,
+    `\n[spij] done. index_nodes=${reg.index_ids.length} norms=${reg.norm_ids.length} published=${result.stats.published} skipped_existing=${result.stats.skippedExisting} date_rejected=${result.stats.dateRejected} empty_body=${result.stats.emptyBody} publish_failed=${result.stats.publishFailed} failed=${result.stats.failed} -> ${opts.out}`,
   );
 }
 
