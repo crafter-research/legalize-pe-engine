@@ -13,3 +13,8 @@ data/cache/
 *.tsbuildinfo
 *.db
 *.db-journal
+
+# catalog SQLite (large, regenerate via `catalog ingest`)
+data/*.db
+data/*.db-wal
+data/*.db-shm

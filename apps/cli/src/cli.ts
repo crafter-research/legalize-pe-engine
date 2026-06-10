@@ -189,4 +189,77 @@ spij
     });
   });
 
+program
+  .command("discover-types")
+  .description("Probe gob.pe type listings for a jurisdiction (or --all) and classify its fetcher")
+  .option("--slug <slug>", "Single gob.pe slug, e.g. regionarequipa")
+  .option("--all", "Probe all 26 regional-tier jurisdictions")
+  .option("--out <path>", "Coverage matrix output (with --all)", "data/coverage-matrix.json")
+  .action(async (opts: { slug?: string; all?: boolean; out?: string }) => {
+    const { runDiscoverTypes } = await import("./scripts/discover-types.ts");
+    await runDiscoverTypes({ ...opts, ...(opts.out ? { out: resolve(opts.out) } : {}) });
+  });
+
+const regional = program
+  .command("regional")
+  .description("Regional-tier (gob.pe, fetch-based, multi-type)");
+
+regional
+  .command("pilot")
+  .description("Fetch one jurisdiction's norms from gob.pe -> SPEC v0.2 JSON (no corpus writes)")
+  .requiredOption("--iso <code>", "pe-{iso} code, e.g. pe-are")
+  .option("--matrix <path>", "Coverage matrix from discover-types", "data/coverage-matrix.json")
+  .option("--out <path>", "Output dir for norm JSON", "/tmp/regional-pilot")
+  .option("--max-pages <n>", "Max listing pages per type", "1000")
+  .action(async (opts: { iso: string; matrix: string; out: string; maxPages: string }) => {
+    const { runRegionalPilot } = await import("./scripts/regional-fetch.ts");
+    await runRegionalPilot({
+      iso: opts.iso,
+      matrix: resolve(opts.matrix),
+      out: resolve(opts.out),
+      maxPages: Number(opts.maxPages),
+    });
+  });
+
+regional
+  .command("fanout")
+  .description("Publish all 26 regional jurisdictions' norms to the corpus (gob.pe, all type codes)")
+  .requiredOption("--corpus <path>", "Corpus repo path", "../legalize-pe")
+  .option("--only <isos>", "Comma-separated iso subset, e.g. pe-are,pe-cus")
+  .option("--max-pages <n>", "Max listing pages per type", "1000")
+  .option("--out <path>", "Summary output dir", "data")
+  .action(async (opts: { corpus: string; only?: string; maxPages: string; out: string }) => {
+    const { runRegionalFanout } = await import("./scripts/regional-fetch.ts");
+    await runRegionalFanout({
+      corpus: resolve(opts.corpus),
+      maxPages: Number(opts.maxPages),
+      out: resolve(opts.out),
+      ...(opts.only ? { only: opts.only.split(",").map((s) => s.trim()) } : {}),
+    });
+  });
+
+const catalog = program
+  .command("catalog")
+  .description("Datos Abiertos catalog — coverage denominator + CatalogCrossrefFetcher data");
+
+catalog
+  .command("ingest")
+  .description("Load the El Peruano dispositivos-legales CSV into a SQLite DB")
+  .requiredOption("--csv <path>", "Path to a DatosAbiertos_Periodo_*.CSV file")
+  .option("--db <path>", "SQLite output path", "data/catalog.db")
+  .action(async (opts: { csv: string; db: string }) => {
+    const { runCatalogIngest } = await import("./scripts/catalog-ingest.ts");
+    await runCatalogIngest({ csv: resolve(opts.csv), db: resolve(opts.db) });
+  });
+
+catalog
+  .command("coverage")
+  .description("Compare corpus files vs catalog rows per jurisdiction -> data/catalog-coverage.json")
+  .option("--db <path>", "SQLite DB from `catalog ingest`", "data/catalog.db")
+  .option("--corpus <path>", "Corpus repo path", "../legalize-pe")
+  .action(async (opts: { db: string; corpus: string }) => {
+    const { runCatalogCoverage } = await import("./scripts/catalog-ingest.ts");
+    await runCatalogCoverage({ db: resolve(opts.db), corpus: resolve(opts.corpus) });
+  });
+
 program.parse();

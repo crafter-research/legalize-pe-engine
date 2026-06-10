@@ -45,6 +45,10 @@ const RANK_LABELS: Record<string, string> = {
   ley_de_reforma_constitucional: "Constitutional Reform",
   ordenanza_regional: "Regional Ordinance",
   ordenanza_municipal: "Municipal Ordinance",
+  decreto_regional: "Regional Decree",
+  acuerdo_regional: "Regional Agreement",
+  acuerdo_de_concejo: "Council Agreement",
+  decreto_de_alcaldia: "Mayoral Decree",
 };
 
 interface Props {

@@ -147,27 +147,36 @@ export const rankLabels: Record<string, string> = {
   ley_de_reforma_constitucional: "Ley de Reforma Constitucional",
   ordenanza_regional: "Ordenanza Regional",
   ordenanza_municipal: "Ordenanza Municipal",
+  // Regional-tier ranks (gob.pe fanout, 2026-06)
+  decreto_regional: "Decreto Regional",
+  acuerdo_regional: "Acuerdo Regional",
+  acuerdo_de_concejo: "Acuerdo de Concejo",
+  decreto_de_alcaldia: "Decreto de Alcaldía",
 };
 
-/** ISO 3166-2:PE jurisdiction display names. */
+/**
+ * ISO 3166-2:PE jurisdiction display names — keyed by the actual corpus directory
+ * names. The corpus distinguishes pe-lim (Gobierno Regional de Lima, Huacho)
+ * from pe-lim-met (Municipalidad Metropolitana de Lima).
+ */
 export const jurisdictionLabels: Record<string, string> = {
   pe: "Nacional",
-  "pe-cus": "Cusco",
-  "pe-lim": "Lima Metropolitana",
-  "pe-cal": "Callao",
   "pe-ama": "Amazonas",
   "pe-anc": "Áncash",
   "pe-apu": "Apurímac",
   "pe-are": "Arequipa",
   "pe-aya": "Ayacucho",
   "pe-caj": "Cajamarca",
-  "pe-hva": "Huancavelica",
-  "pe-hco": "Huánuco",
+  "pe-cal": "Callao",
+  "pe-cus": "Cusco",
+  "pe-huc": "Huánuco",
+  "pe-huv": "Huancavelica",
   "pe-ica": "Ica",
   "pe-jun": "Junín",
   "pe-lal": "La Libertad",
   "pe-lam": "Lambayeque",
-  "pe-lir": "Lima (Región)",
+  "pe-lim": "Lima (Región)",
+  "pe-lim-met": "Lima Metropolitana",
   "pe-lor": "Loreto",
   "pe-mdd": "Madre de Dios",
   "pe-moq": "Moquegua",
@@ -179,3 +188,10 @@ export const jurisdictionLabels: Record<string, string> = {
   "pe-tum": "Tumbes",
   "pe-uca": "Ucayali",
 };
+
+/** Regional jurisdictions (25 GORE + Lima Met) in canonical order, derived from jurisdictionLabels. */
+export const REGIONAL_JURISDICTIONS: Array<{ iso: string; name: string }> = Object.entries(
+  jurisdictionLabels,
+)
+  .filter(([iso]) => iso !== "pe")
+  .map(([iso, name]) => ({ iso, name }));

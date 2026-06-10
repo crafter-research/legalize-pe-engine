@@ -1,80 +1,62 @@
 ---
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/layouts/Layout.astro";
-import { collectAllNormFiles, parseFrontmatter } from "@/lib/laws";
+import { REGIONAL_JURISDICTIONS, collectAllNormFiles } from "@/lib/laws";
 import { ArrowRightIcon } from "lucide-react";
 
-// Group by jurisdiction
-const byJurisdiction: Record<string, { count: number; sample?: string }> = {};
-for (const { absDir, relativePath } of collectAllNormFiles()) {
-  const dirName = absDir.split("/").pop() ?? "";
-  // Only include regional dirs (pe-xxx). pe/ is national.
-  if (!dirName.startsWith("pe-")) continue;
-  try {
-    const raw = readFileSync(join(absDir, relativePath), "utf-8");
-    const { meta } = parseFrontmatter(raw);
-    const iso = meta.jurisdiction ?? dirName;
-    if (!byJurisdiction[iso]) byJurisdiction[iso] = { count: 0 };
-    byJurisdiction[iso].count++;
-    if (!byJurisdiction[iso].sample && meta.title) byJurisdiction[iso].sample = meta.title;
-  } catch {
-    /* skip */
-  }
+// Count norms per jurisdiction directly from the directory name (fast — no frontmatter parse).
+const counts: Record<string, number> = {};
+for (const { absDir } of collectAllNormFiles()) {
+  const dir = absDir.split("/").pop() ?? "";
+  if (!dir.startsWith("pe-")) continue;
+  counts[dir] = (counts[dir] ?? 0) + 1;
 }
 
-// All 27 expected Tier 1 jurisdictions
-const TIER_1: Array<{ iso: string; name: string }> = [
-  { iso: "pe-lim", name: "Lima Metropolitana" },
-  { iso: "pe-cal", name: "Callao" },
-  { iso: "pe-ama", name: "Amazonas" },
-  { iso: "pe-anc", name: "Áncash" },
-  { iso: "pe-apu", name: "Apurímac" },
-  { iso: "pe-are", name: "Arequipa" },
-  { iso: "pe-aya", name: "Ayacucho" },
-  { iso: "pe-caj", name: "Cajamarca" },
-  { iso: "pe-cus", name: "Cusco" },
-  { iso: "pe-hva", name: "Huancavelica" },
-  { iso: "pe-hco", name: "Huánuco" },
-  { iso: "pe-ica", name: "Ica" },
-  { iso: "pe-jun", name: "Junín" },
-  { iso: "pe-lal", name: "La Libertad" },
-  { iso: "pe-lam", name: "Lambayeque" },
-  { iso: "pe-lir", name: "Lima (Región)" },
-  { iso: "pe-lor", name: "Loreto" },
-  { iso: "pe-mdd", name: "Madre de Dios" },
-  { iso: "pe-moq", name: "Moquegua" },
-  { iso: "pe-pas", name: "Pasco" },
-  { iso: "pe-piu", name: "Piura" },
-  { iso: "pe-pun", name: "Puno" },
-  { iso: "pe-sam", name: "San Martín" },
-  { iso: "pe-tac", name: "Tacna" },
-  { iso: "pe-tum", name: "Tumbes" },
-  { iso: "pe-uca", name: "Ucayali" },
-];
+const rows = REGIONAL_JURISDICTIONS.map((j) => ({
+  ...j,
+  count: counts[j.iso] ?? 0,
+})).sort((a, b) => b.count - a.count);
 
-const covered = TIER_1.filter((j) => (byJurisdiction[j.iso]?.count ?? 0) > 0).length;
+const covered = rows.filter((r) => r.count > 0).length;
+const totalRegional = rows.reduce((s, r) => s + r.count, 0);
+const fmt = (n: number) => n.toLocaleString("es-PE");
 ---
 
-<Layout title="Regional jurisdictions · Legalize PE" description="Browse Peruvian regional ordinances across 27 Tier 1 jurisdictions (25 regional governments + Lima Metro + Callao).">
+<Layout
+  title="Regional jurisdictions · Legalize PE"
+  description={`${fmt(totalRegional)} regional norms across ${covered} jurisdictions (25 regional governments + Lima Metropolitana).`}
+>
   <section class="border-b border-border/60">
     <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16">
-      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">Tier 1</p>
+      <nav class="mb-6 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <a href="/" class="hover:text-foreground transition-colors">Home</a>
+        <span aria-hidden>/</span>
+        <span class="text-foreground">Regions</span>
+      </nav>
+      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">Sub-national tier</p>
       <h1 class="text-4xl md:text-6xl tracking-tight leading-none">Regional jurisdictions</h1>
       <p class="mt-4 max-w-2xl text-muted-foreground leading-relaxed">
-        25 regional governments + Lima Metropolitana + Callao. {covered}/{TIER_1.length} covered.
-        First attempt at a cohesive sub-national legal corpus for a Global South country.
+        The first cohesive sub-national legal corpus for a Global South country —
+        regional-government coverage no other Peruvian source offers.
       </p>
+      <div class="mt-8 flex flex-wrap gap-x-10 gap-y-4">
+        <div>
+          <div class="text-3xl tabular-nums tracking-tight">{fmt(totalRegional)}</div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wide">regional norms</div>
+        </div>
+        <div>
+          <div class="text-3xl tabular-nums tracking-tight">{covered}<span class="text-muted-foreground text-xl">/{rows.length}</span></div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wide">jurisdictions</div>
+        </div>
+      </div>
     </div>
   </section>
 
   <section>
     <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12">
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {TIER_1.map((j) => {
-          const data = byJurisdiction[j.iso];
-          const isCovered = (data?.count ?? 0) > 0;
+        {rows.map((j) => {
+          const isCovered = j.count > 0;
           return (
             <a
               href={isCovered ? `/regions/${j.iso}` : "#"}
@@ -84,18 +66,16 @@ const covered = TIER_1.filter((j) => (byJurisdiction[j.iso]?.count ?? 0) > 0).le
                 isCovered ? "hover:border-primary/40 hover:shadow-md group" : "opacity-40 cursor-not-allowed",
               ]}
             >
-              <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="flex items-start justify-between gap-3 mb-3">
                 <h3 class="text-xl tracking-tight leading-tight">{j.name}</h3>
                 {isCovered && (
-                  <ArrowRightIcon className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition" />
+                  <ArrowRightIcon className="size-4 shrink-0 mt-1 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition" />
                 )}
               </div>
-              <div class="flex items-center gap-2 text-xs">
+              <div class="flex items-center justify-between gap-2 text-xs">
                 <Badge variant="outline" className="font-id">{j.iso}</Badge>
                 {isCovered ? (
-                  <span class="text-muted-foreground">
-                    {data!.count} {data!.count === 1 ? "ordinance" : "ordinances"}
-                  </span>
+                  <span class="tabular-nums text-muted-foreground">{fmt(j.count)} norms</span>
                 ) : (
                   <span class="text-muted-foreground">Pending</span>
                 )}
