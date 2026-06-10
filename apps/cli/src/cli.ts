@@ -216,6 +216,23 @@ regional
     });
   });
 
+regional
+  .command("fanout")
+  .description("Publish all 26 regional jurisdictions' norms to the corpus (gob.pe, all type codes)")
+  .requiredOption("--corpus <path>", "Corpus repo path", "../legalize-pe")
+  .option("--only <isos>", "Comma-separated iso subset, e.g. pe-are,pe-cus")
+  .option("--max-pages <n>", "Max listing pages per type", "1000")
+  .option("--out <path>", "Summary output dir", "data")
+  .action(async (opts: { corpus: string; only?: string; maxPages: string; out: string }) => {
+    const { runRegionalFanout } = await import("./scripts/regional-fetch.ts");
+    await runRegionalFanout({
+      corpus: resolve(opts.corpus),
+      maxPages: Number(opts.maxPages),
+      out: resolve(opts.out),
+      ...(opts.only ? { only: opts.only.split(",").map((s) => s.trim()) } : {}),
+    });
+  });
+
 const catalog = program
   .command("catalog")
   .description("Datos Abiertos catalog — coverage denominator + CatalogCrossrefFetcher data");

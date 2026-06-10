@@ -19,11 +19,28 @@
  * Polite: serial, ~1 req/s. Read-only GETs.
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { SpecFrontmatter } from "@legalize-pe/core";
+import { GitPublisher } from "@legalize-pe/git-publisher";
+import { REGIONAL_SLUGS } from "./discover-types.ts";
 
 const GOBPE = "https://www.gob.pe";
+
+/**
+ * Fixed norm-class type codes to try per jurisdiction. gob.pe type IDs are GLOBAL
+ * (13=ordenanza everywhere, 79=acuerdo-regional everywhere), so probing this set
+ * directly is more complete than relying on the landing's sampled types.
+ */
+export const CANDIDATE_TYPES = [
+  "13-ordenanza",
+  "40-ordenanza-regional",
+  "41-decreto-regional",
+  "79-acuerdo-regional",
+  "246-acuerdo-de-consejo-regional",
+  "108-acuerdo-de-concejo",
+  "96-decreto-de-alcaldia",
+];
 const UA = "Mozilla/5.0 (legalize-pe research; +https://github.com/crafter-research/legalize-pe)";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -182,4 +199,90 @@ export async function runRegionalPilot(opts: {
   }
   console.log(`[regional] ${opts.iso} done. total=${total} date_missing=${dateMissing} -> ${opts.out}`);
   console.log(`[regional] by type: ${JSON.stringify(byType)}`);
+}
+
+async function fileExists(p: string): Promise<boolean> {
+  try {
+    await access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Full fanout: for every jurisdiction in REGIONAL_SLUGS (or a filtered subset),
+ * probe all CANDIDATE_TYPES, fetch each type's norms, and publish SPEC v0.2
+ * Markdown to the corpus via GitPublisher (Crafternauta, author-date = real date).
+ * Idempotent: skips norms already in the corpus. Skips norms without a real date.
+ */
+export async function runRegionalFanout(opts: {
+  corpus: string;
+  out?: string;
+  maxPages: number;
+  only?: string[]; // restrict to these iso codes
+}) {
+  const slugs = opts.only ? REGIONAL_SLUGS.filter((j) => opts.only?.includes(j.iso)) : REGIONAL_SLUGS;
+  const publisher = new GitPublisher(opts.corpus);
+  const grand = { published: 0, skipped: 0, dateMissing: 0, failed: 0 };
+  const perJurisdiction: Record<string, number> = {};
+
+  for (const j of slugs) {
+    let jPublished = 0;
+    for (const typeSlug of CANDIDATE_TYPES) {
+      let items: RegionalItem[];
+      try {
+        items = await fetchType(j.slug, typeSlug, opts.maxPages);
+      } catch (e) {
+        grand.failed++;
+        continue;
+      }
+      for (const item of items) {
+        const fm = buildRegionalFrontmatter(item, j.iso, j.slug);
+        if (!ISO_DATE.test(fm.publication_date)) {
+          grand.dateMissing++;
+          continue;
+        }
+        const relativePath = `${j.iso}/${fm.identifier}.md`;
+        if (await fileExists(join(opts.corpus, relativePath))) {
+          grand.skipped++;
+          continue;
+        }
+        try {
+          await publisher.commitNorm({
+            corpusRoot: opts.corpus,
+            relativePath,
+            frontmatter: fm,
+            body: `# ${fm.title}\n\n*Fuente:* ${item.detail_url}\n`,
+            commit: {
+              type: "new",
+              title: fm.title,
+              trailers: {
+                "Source-Id": item.detail_url.split("/normas-legales/")[1]?.split("-")[0] ?? item.detail_url,
+                "Source-Date": fm.publication_date,
+                "Norm-Id": fm.identifier,
+              },
+            },
+          });
+          grand.published++;
+          jPublished++;
+        } catch (e) {
+          grand.failed++;
+        }
+      }
+    }
+    perJurisdiction[j.iso] = jPublished;
+    console.log(
+      `[fanout] ${j.iso.padEnd(10)} ${j.name.padEnd(20)} +${jPublished}  (run total: pub=${grand.published} skip=${grand.skipped} noDate=${grand.dateMissing})`,
+    );
+  }
+
+  console.log(`\n[fanout] DONE. published=${grand.published} skipped=${grand.skipped} date_missing=${grand.dateMissing} failed=${grand.failed}`);
+  console.log(`[fanout] per jurisdiction: ${JSON.stringify(perJurisdiction)}`);
+  if (opts.out) {
+    await mkdir(opts.out, { recursive: true });
+    await writeFile(join(opts.out, "fanout-summary.json"), JSON.stringify({ grand, perJurisdiction, at: new Date().toISOString() }, null, 2));
+  }
 }
