@@ -59,6 +59,7 @@ const GORE_ISO: Record<string, string> = {
 type Tier = "nacional" | "regional" | "municipal";
 
 function deaccent(s: string): string {
+  // biome-ignore lint/suspicious/noMisleadingCharacterClass: matches only U+0300-U+036F combining marks on NFD-normalized text (intentional diacritic strip)
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
@@ -136,7 +137,9 @@ export async function runCatalogIngest(opts: { csv: string; db: string }) {
       const { tier, iso } = classifyEntity(entidad);
       const raw = f[iF] ?? "";
       // CSV dates are YYYYMMDD; normalize to ISO
-      const fecha = /^\d{8}$/.test(raw) ? `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}` : raw;
+      const fecha = /^\d{8}$/.test(raw)
+        ? `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`
+        : raw;
       insert.run(
         fecha,
         f[iOp] ?? "",
@@ -170,11 +173,17 @@ export async function runCatalogIngest(opts: { csv: string; db: string }) {
     tx(batch);
     n += batch.length;
   }
-  db.exec("CREATE INDEX idx_tier ON norms(tier); CREATE INDEX idx_iso ON norms(iso); CREATE INDEX idx_ent ON norms(entidad);");
+  db.exec(
+    "CREATE INDEX idx_tier ON norms(tier); CREATE INDEX idx_iso ON norms(iso); CREATE INDEX idx_ent ON norms(entidad);",
+  );
 
   const byTier = db.query("SELECT tier, COUNT(*) c FROM norms GROUP BY tier ORDER BY c DESC").all();
-  const distinctEnt = (db.query("SELECT COUNT(DISTINCT entidad) c FROM norms").get() as { c: number }).c;
-  const goreRows = db.query("SELECT COUNT(*) c FROM norms WHERE tier='regional'").get() as { c: number };
+  const distinctEnt = (
+    db.query("SELECT COUNT(DISTINCT entidad) c FROM norms").get() as { c: number }
+  ).c;
+  const goreRows = db.query("SELECT COUNT(*) c FROM norms WHERE tier='regional'").get() as {
+    c: number;
+  };
   console.log(`\n[catalog] done. rows=${n.toLocaleString()} -> ${opts.db}`);
   console.log(`[catalog] tiers: ${JSON.stringify(byTier)}`);
   console.log(`[catalog] distinct entities: ${distinctEnt}; regional rows: ${goreRows.c}`);
@@ -197,13 +206,21 @@ export async function runCatalogCoverage(opts: { db: string; corpus: string }) {
   const isoDirs = [...new Set(Object.values(GORE_ISO))];
   const regional = [];
   for (const iso of isoDirs) {
-    const denom = (db.query("SELECT COUNT(*) c FROM norms WHERE iso=?").get(iso) as { c: number }).c;
+    const denom = (db.query("SELECT COUNT(*) c FROM norms WHERE iso=?").get(iso) as { c: number })
+      .c;
     const have = await countMd(iso);
-    regional.push({ iso, corpus: have, catalog_2013_22: denom, pct: denom ? +((have / denom) * 100).toFixed(1) : null });
+    regional.push({
+      iso,
+      corpus: have,
+      catalog_2013_22: denom,
+      pct: denom ? +((have / denom) * 100).toFixed(1) : null,
+    });
   }
   regional.sort((a, b) => (b.catalog_2013_22 ?? 0) - (a.catalog_2013_22 ?? 0));
 
-  const nacionalCatalog = (db.query("SELECT COUNT(*) c FROM norms WHERE tier='nacional'").get() as { c: number }).c;
+  const nacionalCatalog = (
+    db.query("SELECT COUNT(*) c FROM norms WHERE tier='nacional'").get() as { c: number }
+  ).c;
   const nacionalCorpus = await countMd("pe");
 
   const summary = {

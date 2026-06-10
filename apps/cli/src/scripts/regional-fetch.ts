@@ -98,7 +98,10 @@ export function parseListingPage(html: string, slug: string, typeSlug: string): 
 async function fetchPage(slug: string, typeSlug: string, sheet: number): Promise<string> {
   // gob.pe paginates via `&sheet=N` (with page=1 constant). `?page=N` alone is IGNORED.
   const url = `${GOBPE}/institucion/${slug}/normas-legales/tipos/${typeSlug}?page=1&sheet=${sheet}`;
-  const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(25000) });
+  const res = await fetch(url, {
+    headers: { "User-Agent": UA },
+    signal: AbortSignal.timeout(25000),
+  });
   return res.ok ? res.text() : "";
 }
 
@@ -116,7 +119,11 @@ export function maxSheet(html: string): number {
  * (page 1 shows ~1-10, hiding the real last page), so maxSheet() is only a hint —
  * the loop must terminate on an empty/all-duplicate sheet, not on maxSheet.
  */
-export async function fetchType(slug: string, typeSlug: string, maxPages: number): Promise<RegionalItem[]> {
+export async function fetchType(
+  slug: string,
+  typeSlug: string,
+  maxPages: number,
+): Promise<RegionalItem[]> {
   const out: RegionalItem[] = [];
   const seen = new Set<string>();
   for (let sheet = 1; sheet <= maxPages; sheet++) {
@@ -139,9 +146,14 @@ function deriveIdentifier(detailUrl: string, rank: string): string {
   return tail;
 }
 
-export function buildRegionalFrontmatter(item: RegionalItem, iso: string, slug: string): SpecFrontmatter {
+export function buildRegionalFrontmatter(
+  item: RegionalItem,
+  iso: string,
+  slug: string,
+): SpecFrontmatter {
   const rank = typeToRank(item.type_slug);
-  const isMunicipal = rank.includes("municipal") || rank === "acuerdo_de_concejo" || rank === "decreto_de_alcaldia";
+  const isMunicipal =
+    rank.includes("municipal") || rank === "acuerdo_de_concejo" || rank === "decreto_de_alcaldia";
   return {
     title: item.title,
     identifier: deriveIdentifier(item.detail_url, rank),
@@ -170,7 +182,9 @@ export async function runRegionalPilot(opts: {
   out: string;
   maxPages: number;
 }) {
-  const matrix = JSON.parse(await readFile(opts.matrix, "utf8")) as { jurisdictions: MatrixJurisdiction[] };
+  const matrix = JSON.parse(await readFile(opts.matrix, "utf8")) as {
+    jurisdictions: MatrixJurisdiction[];
+  };
   const j = matrix.jurisdictions.find((x) => x.iso === opts.iso);
   if (!j) throw new Error(`iso ${opts.iso} not in matrix`);
 
@@ -192,12 +206,17 @@ export async function runRegionalPilot(opts: {
       const fm = buildRegionalFrontmatter(item, opts.iso, j.slug);
       if (!fm.publication_date) dateMissing++;
       const body = `# ${fm.title}\n\n*Fuente:* ${item.detail_url}\n`;
-      await writeFile(join(opts.out, `${fm.identifier}.json`), JSON.stringify({ frontmatter: fm, body }, null, 2));
+      await writeFile(
+        join(opts.out, `${fm.identifier}.json`),
+        JSON.stringify({ frontmatter: fm, body }, null, 2),
+      );
       total++;
     }
     console.log(`  ${t}: ${items.length} norms`);
   }
-  console.log(`[regional] ${opts.iso} done. total=${total} date_missing=${dateMissing} -> ${opts.out}`);
+  console.log(
+    `[regional] ${opts.iso} done. total=${total} date_missing=${dateMissing} -> ${opts.out}`,
+  );
   console.log(`[regional] by type: ${JSON.stringify(byType)}`);
 }
 
@@ -224,7 +243,9 @@ export async function runRegionalFanout(opts: {
   maxPages: number;
   only?: string[]; // restrict to these iso codes
 }) {
-  const slugs = opts.only ? REGIONAL_SLUGS.filter((j) => opts.only?.includes(j.iso)) : REGIONAL_SLUGS;
+  const slugs = opts.only
+    ? REGIONAL_SLUGS.filter((j) => opts.only?.includes(j.iso))
+    : REGIONAL_SLUGS;
   const publisher = new GitPublisher(opts.corpus);
   const grand = { published: 0, skipped: 0, dateMissing: 0, failed: 0 };
   const perJurisdiction: Record<string, number> = {};
@@ -260,7 +281,8 @@ export async function runRegionalFanout(opts: {
               type: "new",
               title: fm.title,
               trailers: {
-                "Source-Id": item.detail_url.split("/normas-legales/")[1]?.split("-")[0] ?? item.detail_url,
+                "Source-Id":
+                  item.detail_url.split("/normas-legales/")[1]?.split("-")[0] ?? item.detail_url,
                 "Source-Date": fm.publication_date,
                 "Norm-Id": fm.identifier,
               },
@@ -279,10 +301,15 @@ export async function runRegionalFanout(opts: {
     );
   }
 
-  console.log(`\n[fanout] DONE. published=${grand.published} skipped=${grand.skipped} date_missing=${grand.dateMissing} failed=${grand.failed}`);
+  console.log(
+    `\n[fanout] DONE. published=${grand.published} skipped=${grand.skipped} date_missing=${grand.dateMissing} failed=${grand.failed}`,
+  );
   console.log(`[fanout] per jurisdiction: ${JSON.stringify(perJurisdiction)}`);
   if (opts.out) {
     await mkdir(opts.out, { recursive: true });
-    await writeFile(join(opts.out, "fanout-summary.json"), JSON.stringify({ grand, perJurisdiction, at: new Date().toISOString() }, null, 2));
+    await writeFile(
+      join(opts.out, "fanout-summary.json"),
+      JSON.stringify({ grand, perJurisdiction, at: new Date().toISOString() }, null, 2),
+    );
   }
 }

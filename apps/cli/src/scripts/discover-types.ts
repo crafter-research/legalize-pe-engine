@@ -75,7 +75,10 @@ export const REGIONAL_SLUGS: { slug: string; iso: string; name: string }[] = [
 
 async function getText(url: string): Promise<{ status: number; body: string }> {
   try {
-    const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(25000) });
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA },
+      signal: AbortSignal.timeout(25000),
+    });
     const body = res.ok ? await res.text() : "";
     return { status: res.status, body };
   } catch (err) {
@@ -84,7 +87,7 @@ async function getText(url: string): Promise<{ status: number; body: string }> {
 }
 
 function extractTypeSlugs(html: string): string[] {
-  return [...new Set((html.match(/tipos\/\d+-[a-z-]+/g) ?? []))].map((s) => s.replace("tipos/", ""));
+  return [...new Set(html.match(/tipos\/\d+-[a-z-]+/g) ?? [])].map((s) => s.replace("tipos/", ""));
 }
 
 function countDetailLinks(html: string): number {
@@ -102,7 +105,11 @@ export interface JurisdictionProbe {
   primary_type: string | null;
 }
 
-export async function probeJurisdiction(j: { slug: string; iso: string; name: string }): Promise<JurisdictionProbe> {
+export async function probeJurisdiction(j: {
+  slug: string;
+  iso: string;
+  name: string;
+}): Promise<JurisdictionProbe> {
   const landing = await getText(`https://www.gob.pe/institucion/${j.slug}/normas-legales`);
   const types = extractTypeSlugs(landing.body);
   const normTypes = types.filter((t) => NORM_TYPE_PATTERNS.some((re) => re.test(t)));
@@ -114,7 +121,9 @@ export async function probeJurisdiction(j: { slug: string; iso: string; name: st
     probes.push({ type: t, status: r.status, detail_links: countDetailLinks(r.body) });
   }
 
-  const withContent = probes.filter((p) => p.detail_links > 0).sort((a, b) => b.detail_links - a.detail_links);
+  const withContent = probes
+    .filter((p) => p.detail_links > 0)
+    .sort((a, b) => b.detail_links - a.detail_links);
   let recommended: JurisdictionProbe["recommended_fetcher"];
   let primary: string | null = null;
   if (withContent.length > 0) {
@@ -141,7 +150,11 @@ export async function probeJurisdiction(j: { slug: string; iso: string; name: st
 
 export async function runDiscoverTypes(opts: { slug?: string; all?: boolean; out?: string }) {
   if (opts.slug) {
-    const j = REGIONAL_SLUGS.find((x) => x.slug === opts.slug) ?? { slug: opts.slug, iso: "?", name: opts.slug };
+    const j = REGIONAL_SLUGS.find((x) => x.slug === opts.slug) ?? {
+      slug: opts.slug,
+      iso: "?",
+      name: opts.slug,
+    };
     const p = await probeJurisdiction(j);
     console.log(JSON.stringify(p, null, 2));
     return;
@@ -155,7 +168,8 @@ export async function runDiscoverTypes(opts: { slug?: string; all?: boolean; out
   for (const j of REGIONAL_SLUGS) {
     const p = await probeJurisdiction(j);
     results.push(p);
-    const tag = p.recommended_fetcher === "gob-pe" ? `gob-pe (${p.primary_type})` : p.recommended_fetcher;
+    const tag =
+      p.recommended_fetcher === "gob-pe" ? `gob-pe (${p.primary_type})` : p.recommended_fetcher;
     console.log(`${j.iso.padEnd(10)} ${j.name.padEnd(20)} -> ${tag}`);
     await sleep(1000);
   }
@@ -170,7 +184,11 @@ export async function runDiscoverTypes(opts: { slug?: string; all?: boolean; out
     await mkdir(dirname(opts.out), { recursive: true });
     await writeFile(
       opts.out,
-      JSON.stringify({ generated_at: new Date().toISOString(), summary: byFetcher, jurisdictions: results }, null, 2),
+      JSON.stringify(
+        { generated_at: new Date().toISOString(), summary: byFetcher, jurisdictions: results },
+        null,
+        2,
+      ),
     );
     console.log(`coverage matrix -> ${opts.out}`);
   }
