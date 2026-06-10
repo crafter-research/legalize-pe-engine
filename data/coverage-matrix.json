@@ -1,0 +1,763 @@
+{
+  "generated_at": "2026-06-10T00:01:47.591Z",
+  "summary": {
+    "gob-pe": 26
+  },
+  "jurisdictions": [
+    {
+      "slug": "regionamazonas",
+      "iso": "pe-ama",
+      "name": "Amazonas",
+      "landing_status": 200,
+      "landing_types": [
+        "246-acuerdo-de-consejo-regional",
+        "1111-auto-directoral",
+        "2530-contrato-de-gerencia-general-regional",
+        "25-convenio",
+        "30-acta",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "1312-acta-de-sesion-ordinaria",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionancash",
+      "iso": "pe-anc",
+      "name": "Áncash",
+      "landing_status": 200,
+      "landing_types": [
+        "86-acuerdo",
+        "246-acuerdo-de-consejo-regional",
+        "25-convenio",
+        "41-decreto-regional",
+        "30-acta",
+        "58-formato",
+        "37-manual",
+        "16-tupa"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "41-decreto-regional",
+          "status": 200,
+          "detail_links": 1
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionapurimac",
+      "iso": "pe-apu",
+      "name": "Apurímac",
+      "landing_status": 200,
+      "landing_types": [
+        "246-acuerdo-de-consejo-regional",
+        "2167-adenda",
+        "84-circular",
+        "2530-contrato-de-gerencia-general-regional",
+        "30-acta",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional",
+        "17-archivo",
+        "6-articulo"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionarequipa",
+      "iso": "pe-are",
+      "name": "Arequipa",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "246-acuerdo-de-consejo-regional",
+        "41-decreto-regional",
+        "28-directiva",
+        "30-acta",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "1312-acta-de-sesion-ordinaria",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 4
+        },
+        {
+          "type": "41-decreto-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionayacucho",
+      "iso": "pe-aya",
+      "name": "Ayacucho",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "246-acuerdo-de-consejo-regional",
+        "73-acuerdo-de-sala-plena",
+        "1111-auto-directoral",
+        "30-acta",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional",
+        "90-acta-de-sesion-de-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 2
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regioncajamarca",
+      "iso": "pe-caj",
+      "name": "Cajamarca",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "25-convenio",
+        "41-decreto-regional",
+        "9-decreto-supremo",
+        "30-acta",
+        "17-archivo",
+        "2-boletin",
+        "104-convenio"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "41-decreto-regional",
+          "status": 200,
+          "detail_links": 4
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regioncallao",
+      "iso": "pe-cal",
+      "name": "Callao",
+      "landing_status": 200,
+      "landing_types": [
+        "86-acuerdo",
+        "79-acuerdo-regional",
+        "108-acuerdo-de-concejo",
+        "246-acuerdo-de-consejo-regional",
+        "30-acta",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional",
+        "90-acta-de-sesion-de-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 5
+        },
+        {
+          "type": "108-acuerdo-de-concejo",
+          "status": 200,
+          "detail_links": 3
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regioncusco",
+      "iso": "pe-cus",
+      "name": "Cusco",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "246-acuerdo-de-consejo-regional",
+        "2167-adenda",
+        "25-convenio",
+        "30-acta",
+        "1311-acta-de-sesion-extraordinaria",
+        "1244-acta-de-sesion-extraordinaria-de-concejo",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionhuancavelica",
+      "iso": "pe-huv",
+      "name": "Huancavelica",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "246-acuerdo-de-consejo-regional",
+        "41-decreto-regional",
+        "28-directiva",
+        "30-acta",
+        "17-archivo",
+        "104-convenio",
+        "239-directorio"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "41-decreto-regional",
+          "status": 200,
+          "detail_links": 5
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionhuanuco",
+      "iso": "pe-huc",
+      "name": "Huánuco",
+      "landing_status": 200,
+      "landing_types": [
+        "9-decreto-supremo",
+        "40-ordenanza-regional",
+        "10-resolucion",
+        "26-resolucion-directoral",
+        "30-acta",
+        "17-archivo",
+        "6-articulo",
+        "2-boletin"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "40-ordenanza-regional",
+          "status": 200,
+          "detail_links": 1
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "40-ordenanza-regional"
+    },
+    {
+      "slug": "regionica",
+      "iso": "pe-ica",
+      "name": "Ica",
+      "landing_status": 200,
+      "landing_types": [
+        "246-acuerdo-de-consejo-regional",
+        "1111-auto-directoral",
+        "2530-contrato-de-gerencia-general-regional",
+        "41-decreto-regional",
+        "30-acta",
+        "1312-acta-de-sesion-ordinaria",
+        "90-acta-de-sesion-de-consejo-regional",
+        "91-agenda-de-sesion-de-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "41-decreto-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionjunin",
+      "iso": "pe-jun",
+      "name": "Junín",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "246-acuerdo-de-consejo-regional",
+        "2167-adenda",
+        "128-contrato",
+        "30-acta",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional",
+        "17-archivo"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 2
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionlalibertad",
+      "iso": "pe-lal",
+      "name": "La Libertad",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "84-circular",
+        "2530-contrato-de-gerencia-general-regional",
+        "25-convenio",
+        "30-acta",
+        "90-acta-de-sesion-de-consejo-regional",
+        "91-agenda-de-sesion-de-consejo-regional",
+        "17-archivo"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionlambayeque",
+      "iso": "pe-lam",
+      "name": "Lambayeque",
+      "landing_status": 200,
+      "landing_types": [
+        "86-acuerdo",
+        "158-acuerdo-directivo",
+        "79-acuerdo-regional",
+        "2266-acuerdo-de-concejo-ordinario",
+        "30-acta",
+        "91-agenda-de-sesion-de-consejo-regional",
+        "319-aviso-de-sinceramiento",
+        "3718-bases"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionlima",
+      "iso": "pe-lim",
+      "name": "Lima (GORE)",
+      "landing_status": 200,
+      "landing_types": [
+        "246-acuerdo-de-consejo-regional",
+        "1111-auto-directoral",
+        "41-decreto-regional",
+        "9-decreto-supremo",
+        "30-acta",
+        "90-acta-de-sesion-de-consejo-regional",
+        "91-agenda-de-sesion-de-consejo-regional",
+        "17-archivo"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "41-decreto-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionloreto",
+      "iso": "pe-lor",
+      "name": "Loreto",
+      "landing_status": 200,
+      "landing_types": [
+        "158-acuerdo-directivo",
+        "79-acuerdo-regional",
+        "108-acuerdo-de-concejo",
+        "1573-acuerdo-de-consejo-directivo",
+        "30-acta",
+        "1311-acta-de-sesion-extraordinaria",
+        "1312-acta-de-sesion-ordinaria",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 5
+        },
+        {
+          "type": "108-acuerdo-de-concejo",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "108-acuerdo-de-concejo"
+    },
+    {
+      "slug": "regionmadrededios",
+      "iso": "pe-mdd",
+      "name": "Madre de Dios",
+      "landing_status": 200,
+      "landing_types": [
+        "86-acuerdo",
+        "781-acuerdo-municipal",
+        "79-acuerdo-regional",
+        "108-acuerdo-de-concejo",
+        "30-acta",
+        "1311-acta-de-sesion-extraordinaria",
+        "17-archivo",
+        "6-articulo"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 1
+        },
+        {
+          "type": "108-acuerdo-de-concejo",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "108-acuerdo-de-concejo"
+    },
+    {
+      "slug": "regionmoquegua",
+      "iso": "pe-moq",
+      "name": "Moquegua",
+      "landing_status": 200,
+      "landing_types": [
+        "86-acuerdo",
+        "246-acuerdo-de-consejo-regional",
+        "2530-contrato-de-gerencia-general-regional",
+        "25-convenio",
+        "30-acta",
+        "1311-acta-de-sesion-extraordinaria",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "1312-acta-de-sesion-ordinaria"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionpasco",
+      "iso": "pe-pas",
+      "name": "Pasco",
+      "landing_status": 200,
+      "landing_types": [
+        "86-acuerdo",
+        "79-acuerdo-regional",
+        "108-acuerdo-de-concejo",
+        "246-acuerdo-de-consejo-regional",
+        "30-acta",
+        "319-aviso-de-sinceramiento",
+        "107-concurso-publico",
+        "27-documento-de-gestion"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 1
+        },
+        {
+          "type": "108-acuerdo-de-concejo",
+          "status": 200,
+          "detail_links": 2
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionpiura",
+      "iso": "pe-piu",
+      "name": "Piura",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "246-acuerdo-de-consejo-regional",
+        "2167-adenda",
+        "2530-contrato-de-gerencia-general-regional",
+        "30-acta",
+        "1311-acta-de-sesion-extraordinaria",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "1312-acta-de-sesion-ordinaria"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionpuno",
+      "iso": "pe-pun",
+      "name": "Puno",
+      "landing_status": 200,
+      "landing_types": [
+        "158-acuerdo-directivo",
+        "79-acuerdo-regional",
+        "2530-contrato-de-gerencia-general-regional",
+        "25-convenio",
+        "17-archivo",
+        "104-convenio",
+        "27-documento-de-gestion",
+        "67-formulario"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regionsanmartin",
+      "iso": "pe-sam",
+      "name": "San Martín",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "108-acuerdo-de-concejo",
+        "246-acuerdo-de-consejo-regional",
+        "25-convenio",
+        "30-acta",
+        "17-archivo",
+        "319-aviso-de-sinceramiento",
+        "66-bases-estandar"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 11
+        },
+        {
+          "type": "108-acuerdo-de-concejo",
+          "status": 200,
+          "detail_links": 1
+        },
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 1
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "regiontacna",
+      "iso": "pe-tac",
+      "name": "Tacna",
+      "landing_status": 200,
+      "landing_types": [
+        "246-acuerdo-de-consejo-regional",
+        "2167-adenda",
+        "226-constancia",
+        "25-convenio",
+        "30-acta",
+        "1311-acta-de-sesion-extraordinaria",
+        "1312-acta-de-sesion-ordinaria",
+        "90-acta-de-sesion-de-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regiontumbes",
+      "iso": "pe-tum",
+      "name": "Tumbes",
+      "landing_status": 200,
+      "landing_types": [
+        "2266-acuerdo-de-concejo-ordinario",
+        "1573-acuerdo-de-consejo-directivo",
+        "246-acuerdo-de-consejo-regional",
+        "25-convenio",
+        "30-acta",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "1312-acta-de-sesion-ordinaria",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "246-acuerdo-de-consejo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "246-acuerdo-de-consejo-regional"
+    },
+    {
+      "slug": "regionucayali",
+      "iso": "pe-uca",
+      "name": "Ucayali",
+      "landing_status": 200,
+      "landing_types": [
+        "79-acuerdo-regional",
+        "2167-adenda",
+        "128-contrato",
+        "25-convenio",
+        "30-acta",
+        "248-acta-de-sesion-extraordinaria-del-consejo-regional",
+        "247-acta-de-sesion-ordinaria-del-consejo-regional",
+        "17-archivo"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "79-acuerdo-regional",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "79-acuerdo-regional"
+    },
+    {
+      "slug": "munilima",
+      "iso": "pe-lim-met",
+      "name": "Lima Metropolitana",
+      "landing_status": 200,
+      "landing_types": [
+        "86-acuerdo",
+        "108-acuerdo-de-concejo",
+        "177-competencia",
+        "96-decreto-de-alcaldia",
+        "30-acta",
+        "238-acta-de-consejo-directivo",
+        "451-acta-de-sesion-ordinaria-de-concejo",
+        "92-acta-de-sesion-de-concejo-municipal"
+      ],
+      "norm_type_probes": [
+        {
+          "type": "108-acuerdo-de-concejo",
+          "status": 200,
+          "detail_links": 25
+        },
+        {
+          "type": "96-decreto-de-alcaldia",
+          "status": 200,
+          "detail_links": 25
+        }
+      ],
+      "recommended_fetcher": "gob-pe",
+      "primary_type": "108-acuerdo-de-concejo"
+    }
+  ]
+}

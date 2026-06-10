@@ -184,6 +184,17 @@ spij
     });
   });
 
+program
+  .command("discover-types")
+  .description("Probe gob.pe type listings for a jurisdiction (or --all) and classify its fetcher")
+  .option("--slug <slug>", "Single gob.pe slug, e.g. regionarequipa")
+  .option("--all", "Probe all 26 regional-tier jurisdictions")
+  .option("--out <path>", "Coverage matrix output (with --all)", "data/coverage-matrix.json")
+  .action(async (opts: { slug?: string; all?: boolean; out?: string }) => {
+    const { runDiscoverTypes } = await import("./scripts/discover-types.ts");
+    await runDiscoverTypes({ ...opts, ...(opts.out ? { out: resolve(opts.out) } : {}) });
+  });
+
 const catalog = program
   .command("catalog")
   .description("Datos Abiertos catalog — coverage denominator + CatalogCrossrefFetcher data");
