@@ -174,7 +174,9 @@ spij
 
 spij
   .command("fetch")
-  .description("Fetch norms from a registry via detallenorma -> SPEC v0.2 (JSON, or commit to corpus)")
+  .description(
+    "Fetch norms from a registry via detallenorma -> SPEC v0.2 (JSON, or commit to corpus)",
+  )
   .requiredOption("--registry <path>", "Registry JSON from `spij crawl`")
   .option("--limit <n>", "Fetch only first N norms")
   .option("--out <path>", "Output dir for norm JSON (when not publishing)", "/tmp/spij-norms")
@@ -223,7 +225,9 @@ regional
 
 regional
   .command("fanout")
-  .description("Publish all 26 regional jurisdictions' norms to the corpus (gob.pe, all type codes)")
+  .description(
+    "Publish all 26 regional jurisdictions' norms to the corpus (gob.pe, all type codes)",
+  )
   .requiredOption("--corpus <path>", "Corpus repo path", "../legalize-pe")
   .option("--only <isos>", "Comma-separated iso subset, e.g. pe-are,pe-cus")
   .option("--max-pages <n>", "Max listing pages per type", "1000")
@@ -254,7 +258,9 @@ catalog
 
 catalog
   .command("coverage")
-  .description("Compare corpus files vs catalog rows per jurisdiction -> data/catalog-coverage.json")
+  .description(
+    "Compare corpus files vs catalog rows per jurisdiction -> data/catalog-coverage.json",
+  )
   .option("--db <path>", "SQLite DB from `catalog ingest`", "data/catalog.db")
   .option("--corpus <path>", "Corpus repo path", "../legalize-pe")
   .action(async (opts: { db: string; corpus: string }) => {

@@ -105,11 +105,16 @@ async function main() {
       failed++;
       console.error(`  ${id} failed: ${e}`);
     }
-    process.stdout.write(`\r[recover] recovered=${recovered} no_date=${noDate} existing=${existing} empty=${emptyBody} failed=${failed}`);
+    process.stdout.write(
+      `\r[recover] recovered=${recovered} no_date=${noDate} existing=${existing} empty=${emptyBody} failed=${failed}`,
+    );
     await sleep(800);
   }
-  console.log(`\n[recover] done. recovered=${recovered} no_date=${noDate} existing=${existing} empty=${emptyBody} failed=${failed}`);
-  if (noDateIds.length) console.log(`[recover] date-less ids (left out, no fechaPublicacion): ${noDateIds.join(", ")}`);
+  console.log(
+    `\n[recover] done. recovered=${recovered} no_date=${noDate} existing=${existing} empty=${emptyBody} failed=${failed}`,
+  );
+  if (noDateIds.length)
+    console.log(`[recover] date-less ids (left out, no fechaPublicacion): ${noDateIds.join(", ")}`);
 }
 
 main();

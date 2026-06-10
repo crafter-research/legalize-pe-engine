@@ -24,9 +24,9 @@
 
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { RANK_NORMALIZATIONS, USER_AGENT, type SpecFrontmatter } from "@legalize-pe/core";
-import { htmlToMarkdown } from "@legalize-pe/parser";
+import { RANK_NORMALIZATIONS, type SpecFrontmatter, USER_AGENT } from "@legalize-pe/core";
 import { GitPublisher } from "@legalize-pe/git-publisher";
+import { htmlToMarkdown } from "@legalize-pe/parser";
 
 const BACK = "https://spijwsii.minjus.gob.pe/spij-ext-back";
 
@@ -120,6 +120,7 @@ export function rankFromDispositivo(dispositivo: string | null): string {
   const slug = dispositivo
     .toLowerCase()
     .normalize("NFD")
+    // biome-ignore lint/suspicious/noMisleadingCharacterClass: matches only U+0300-U+036F combining marks on NFD-normalized text (intentional diacritic strip)
     .replace(/[̀-ͯ]/g, "")
     .trim()
     .replace(/\s+/g, "-");
@@ -143,14 +144,17 @@ function stripTags(html: string | null): string {
 }
 
 function normalizeIdentifierPart(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/^\s*N[º°o.]?\s*/i, "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .replace(/-+/g, "-");
+  return (
+    value
+      .normalize("NFD")
+      // biome-ignore lint/suspicious/noMisleadingCharacterClass: matches only U+0300-U+036F combining marks on NFD-normalized text (intentional diacritic strip)
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/^\s*N[º°o.]?\s*/i, "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .replace(/-+/g, "-")
+  );
 }
 
 function identifierFromDetalle(d: DetalleNorma, rank: string, publicationDate: string): string {
