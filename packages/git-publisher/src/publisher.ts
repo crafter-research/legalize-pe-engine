@@ -1,8 +1,9 @@
 /**
- * Git publisher — commits to the corpus repo with Crafternauta bot identity
+ * Git publisher - commits to the corpus repo with Crafternauta bot identity
  * and SPEC v0.2 trailers.
  */
 
+import { spawnSync } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import {
@@ -13,7 +14,6 @@ import {
   gitSafeAuthorDate,
 } from "@legalize-pe/core";
 import matter from "gray-matter";
-import { type SimpleGit, simpleGit } from "simple-git";
 
 export interface PublishInput {
   corpusRoot: string; // absolute path to the legalize-pe corpus repo on disk
@@ -33,11 +33,7 @@ export interface PublishInput {
 }
 
 export class GitPublisher {
-  private git: SimpleGit;
-
-  constructor(public corpusRoot: string) {
-    this.git = simpleGit(corpusRoot);
-  }
+  constructor(public corpusRoot: string) {}
 
   async commitNorm(input: PublishInput): Promise<string> {
     const absPath = join(input.corpusRoot, input.relativePath);
@@ -49,13 +45,11 @@ export class GitPublisher {
     );
     await writeFile(absPath, content, "utf-8");
 
-    await this.git.add(input.relativePath);
+    git(input.corpusRoot, ["add", input.relativePath]);
 
     const message = formatCommitMessage(input.commit);
     const authorDate = gitSafeAuthorDate(input.frontmatter.publication_date);
 
-    // simple-git's .commit() doesn't expose env, so use raw with env.
-    // Note: must NOT inherit GIT_EDITOR from shell (simple-git rejects it as unsafe).
     const env = {
       PATH: process.env.PATH ?? "",
       HOME: process.env.HOME ?? "",
@@ -67,16 +61,34 @@ export class GitPublisher {
       GIT_COMMITTER_DATE: authorDate,
     };
 
-    await this.git.env(env).commit(message);
-    const head = await this.git.revparse(["HEAD"]);
-    return head.trim();
+    git(input.corpusRoot, ["commit", "--no-gpg-sign", "--file", "-"], env, message);
+    return git(input.corpusRoot, ["rev-parse", "HEAD"]).stdout.trim();
   }
+}
+
+function git(
+  cwd: string,
+  args: string[],
+  env?: Record<string, string>,
+  input?: string,
+): { stdout: string } {
+  const result = spawnSync("git", args, {
+    cwd,
+    env,
+    input,
+    encoding: "utf-8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (result.status !== 0) {
+    throw new Error(`git ${args.join(" ")} failed: ${result.stderr || result.stdout}`);
+  }
+  return { stdout: result.stdout ?? "" };
 }
 
 export function formatCommitMessage(commit: PublishInput["commit"]): string {
   const articlesSuffix =
     commit.articles_affected && commit.articles_affected.length > 0
-      ? ` — art. ${commit.articles_affected.join(", ")}`
+      ? ` - art. ${commit.articles_affected.join(", ")}`
       : "";
   const subject = `[${commit.type}] ${commit.title}${articlesSuffix}`;
 

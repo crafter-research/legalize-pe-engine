@@ -248,18 +248,33 @@ regional
   .requiredOption("--iso <code>", "Jurisdiction, e.g. pe-tac")
   .option("--corpus <path>", "Corpus repo path", "../legalize-pe")
   .option("--max <n>", "Max norms to process (pilot)")
-  .action(async (opts: { iso: string; corpus: string; max?: string }) => {
-    const { runRegionalFulltext } = await import("./scripts/regional-fulltext.ts");
-    await runRegionalFulltext({
-      iso: opts.iso,
-      corpus: resolve(opts.corpus),
-      ...(opts.max ? { max: Number(opts.max) } : {}),
-    });
-  });
+  .option("--max-pages <n>", "Max scanned PDF pages to OCR per norm", "15")
+  .option("--ocr-dpi <n>", "Rasterization DPI for scanned PDFs", "200")
+  .option("--ocr-lang <langs>", "Tesseract languages for OCR", "spa+eng")
+  .action(
+    async (opts: {
+      iso: string;
+      corpus: string;
+      max?: string;
+      maxPages: string;
+      ocrDpi: string;
+      ocrLang: string;
+    }) => {
+      const { runRegionalFulltext } = await import("./scripts/regional-fulltext.ts");
+      await runRegionalFulltext({
+        iso: opts.iso,
+        corpus: resolve(opts.corpus),
+        ...(opts.max ? { max: Number(opts.max) } : {}),
+        maxPages: Number(opts.maxPages),
+        ocrDpi: Number(opts.ocrDpi),
+        ocrLang: opts.ocrLang,
+      });
+    },
+  );
 
 const catalog = program
   .command("catalog")
-  .description("Datos Abiertos catalog — coverage denominator + CatalogCrossrefFetcher data");
+  .description("Datos Abiertos catalog - coverage denominator + CatalogCrossrefFetcher data");
 
 catalog
   .command("ingest")

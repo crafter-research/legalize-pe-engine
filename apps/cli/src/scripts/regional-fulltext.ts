@@ -4,9 +4,8 @@
  * The regional fanout published metadata-only "skeleton" norms (title + date +
  * source link). This pipeline fills in the body: for each regional norm it
  * fetches the gob.pe detail page, extracts the CDN PDF link, downloads the PDF,
- * and extracts text. Most gob.pe regional PDFs are born-digital El Peruano
- * gazette pages, so `pdftotext` works (no OCR). PDFs with no text layer are
- * counted as needs_ocr and left as skeleton for a later OCR pass.
+ * and extracts text. Born-digital PDFs use `pdftotext`; scanned PDFs are
+ * rasterized with `pdftoppm` and transcribed with local OCR.
  *
  * Idempotent: skips norms whose body is already real (not a "*Fuente:*" skeleton).
  * Commits each enriched norm to the corpus as a [correction] with the norm's
@@ -18,7 +17,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { SpecFrontmatter } from "@legalize-pe/core";
@@ -54,6 +53,7 @@ export function cleanPdfText(raw: string): string {
     .replace(/Fecha:\s*\d{2}\/\d{2}\/\d{4}[^\n]*/gi, "")
     .replace(/^\s*NORMAS LEGALES\s*$/gim, "")
     .replace(/El Peruano\s*\/?[^\n]*\d{4}[^\n]*/gi, "")
+    .replace(/\f/g, "\n")
     .replace(/^\s*\d{1,4}\s*$/gm, "") // standalone page numbers
     .replace(/([a-záéíóúñ])-\n([a-záéíóúñ])/gi, "$1$2") // de-hyphenate line breaks
     .replace(/[ \t]+\n/g, "\n")
@@ -63,10 +63,61 @@ export function cleanPdfText(raw: string): string {
 
 interface Stats {
   enriched: number;
+  bornDigital: number;
+  ocrEnriched: number;
   skippedReal: number;
   needsOcr: number;
+  ocrFailed: number;
+  ocrPageLimited: number;
   noPdf: number;
   failed: number;
+}
+
+function isLegalText(text: string, minChars: number): boolean {
+  const compactLength = text.replace(/\s/g, "").length;
+  if (compactLength < minChars) return false;
+  return /\b(art[ií]culo|ordenanza|acuerdo|decreto|resuelve|gobierno regional|consejo regional|gerencia|aprobar|aprueba|dispone|resoluci[oó]n)\b/i.test(
+    text,
+  );
+}
+
+function listRasterPages(dir: string, prefix: string): string[] {
+  return readdirSync(dir)
+    .filter((f) => f.startsWith(prefix) && f.endsWith(".png"))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .map((f) => join(dir, f));
+}
+
+function ocrPdf(pdfPath: string, opts: { maxPages: number; dpi: number; lang: string }): string {
+  const dir = mkdtempSync(join(tmpdir(), "legalize-ocr-"));
+  try {
+    const prefix = "page";
+    const raster = spawnSync("pdftoppm", [
+      "-png",
+      "-r",
+      String(opts.dpi),
+      "-f",
+      "1",
+      "-l",
+      String(opts.maxPages),
+      pdfPath,
+      join(dir, prefix),
+    ]);
+    if (raster.status !== 0) return "";
+
+    const pages = listRasterPages(dir, prefix);
+    const texts: string[] = [];
+    for (const page of pages) {
+      const out = spawnSync("tesseract", [page, "stdout", "-l", opts.lang, "--psm", "1"], {
+        encoding: "utf-8",
+        maxBuffer: 64 * 1024 * 1024,
+      });
+      if (out.status === 0 && out.stdout) texts.push(out.stdout);
+    }
+    return cleanPdfText(texts.join("\n\n"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 export async function runRegionalFulltext(opts: {
@@ -74,14 +125,30 @@ export async function runRegionalFulltext(opts: {
   corpus: string;
   max?: number;
   minChars?: number;
+  maxPages?: number;
+  ocrDpi?: number;
+  ocrLang?: string;
 }) {
   const dir = join(opts.corpus, opts.iso);
   const files = readdirSync(dir)
     .filter((f) => f.endsWith(".md"))
     .sort();
   const minChars = opts.minChars ?? 500;
+  const maxPages = opts.maxPages ?? 15;
+  const ocrDpi = opts.ocrDpi ?? 200;
+  const ocrLang = opts.ocrLang ?? "spa+eng";
   const publisher = new GitPublisher(opts.corpus);
-  const stats: Stats = { enriched: 0, skippedReal: 0, needsOcr: 0, noPdf: 0, failed: 0 };
+  const stats: Stats = {
+    enriched: 0,
+    bornDigital: 0,
+    ocrEnriched: 0,
+    skippedReal: 0,
+    needsOcr: 0,
+    ocrFailed: 0,
+    ocrPageLimited: 0,
+    noPdf: 0,
+    failed: 0,
+  };
   const needsOcrIds: string[] = [];
   const tmp = join(tmpdir(), `legalize-pdf-${opts.iso}.pdf`);
 
@@ -115,14 +182,30 @@ export async function runRegionalFulltext(opts: {
         encoding: "utf-8",
         maxBuffer: 64 * 1024 * 1024,
       });
-      const text = cleanPdfText(out.stdout ?? "");
-      if (text.replace(/\s/g, "").length < minChars) {
+      let text = cleanPdfText(out.stdout ?? "");
+      let sourceKind: "born-digital" | "ocr" = "born-digital";
+      if (!isLegalText(text, minChars)) {
         stats.needsOcr++;
-        needsOcrIds.push(fm.identifier ?? file);
-        await sleep(1000);
-        continue;
+        const normId = fm.identifier ?? file;
+        const pageInfo = spawnSync("pdfinfo", [tmp], { encoding: "utf-8" });
+        const pageMatch = pageInfo.stdout?.match(/^Pages:\s+(\d+)/m);
+        const pageCount = pageMatch ? Number(pageMatch[1]) : 0;
+        if (pageCount > maxPages) {
+          stats.ocrPageLimited++;
+          needsOcrIds.push(normId);
+          await sleep(1000);
+          continue;
+        }
+        text = ocrPdf(tmp, { maxPages, dpi: ocrDpi, lang: ocrLang });
+        sourceKind = "ocr";
+        if (!isLegalText(text, minChars)) {
+          stats.ocrFailed++;
+          needsOcrIds.push(normId);
+          await sleep(1000);
+          continue;
+        }
       }
-      const body = `# ${fm.title}\n\n${text}\n\n---\n\n*Fuente:* ${fm.source}${fm.pdf_url ? "" : `\n*PDF:* ${pdfUrl}`}\n`;
+      const body = `# ${fm.title}\n\n${text}\n\n---\n\nFuente: ${fm.source}\nPDF: ${pdfUrl}\n`;
       await publisher.commitNorm({
         corpusRoot: opts.corpus,
         relativePath: relPath,
@@ -130,7 +213,7 @@ export async function runRegionalFulltext(opts: {
         body,
         commit: {
           type: "correction",
-          title: `${fm.title} — texto completo`,
+          title: `${fm.title} - texto completo`,
           trailers: {
             "Source-Id": pdfUrl.split("/file/")[1]?.split("/")[0] ?? fm.identifier ?? file,
             "Source-Date": fm.publication_date || "unknown",
@@ -139,8 +222,10 @@ export async function runRegionalFulltext(opts: {
         },
       });
       stats.enriched++;
+      if (sourceKind === "born-digital") stats.bornDigital++;
+      else stats.ocrEnriched++;
       process.stdout.write(
-        `\r[fulltext] ${opts.iso} enriched=${stats.enriched} needs_ocr=${stats.needsOcr} no_pdf=${stats.noPdf} failed=${stats.failed}  `,
+        `\r[fulltext] ${opts.iso} enriched=${stats.enriched} born_digital=${stats.bornDigital} ocr=${stats.ocrEnriched} needs_ocr=${stats.needsOcr} ocr_failed=${stats.ocrFailed} ocr_limited=${stats.ocrPageLimited} no_pdf=${stats.noPdf} failed=${stats.failed}  `,
       );
       await sleep(1000);
     } catch (err) {
