@@ -11,8 +11,9 @@ import { marked } from "marked";
 
 export async function getStaticPaths() {
   const idToFile = buildIdToFileMap();
+  // Keys are already globally-unique, lowercased ids (normUniqueId), so no .toLowerCase() needed.
   return [...idToFile.entries()].map(([id, absPath]) => ({
-    params: { id: id.toLowerCase() },
+    params: { id },
     props: { absPath, originalId: id },
   }));
 }

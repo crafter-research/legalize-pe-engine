@@ -4,7 +4,12 @@ import { join } from "node:path";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Layout from "@/layouts/Layout.astro";
-import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import {
+  collectAllNormFiles,
+  jurisdictionLabels,
+  normUniqueId,
+  parseFrontmatter,
+} from "@/lib/laws";
 import { ArrowRightIcon, CodeIcon, GitCommitIcon, GitForkIcon, ScrollTextIcon } from "lucide-react";
 
 const files = collectAllNormFiles();
@@ -21,11 +26,13 @@ const stats = {
 
 type Norm = {
   identifier: string;
+  id: string;
   title: string;
   rank: string;
   publication_date: string;
   jurisdiction: string;
 };
+const MAX_Y = new Date().getFullYear() + 1;
 const recent: Norm[] = [];
 for (const { absDir, relativePath } of files) {
   try {
@@ -33,9 +40,10 @@ for (const { absDir, relativePath } of files) {
     const { meta } = parseFrontmatter(raw);
     if (!meta.title || !meta.identifier || !meta.publication_date) continue;
     const y = Number(meta.publication_date.slice(0, 4));
-    if (y < 1900 || y > 2026) continue;
+    if (y < 1900 || y > MAX_Y) continue;
     recent.push({
       identifier: meta.identifier,
+      id: normUniqueId(`${absDir.split("/").pop() ?? ""}/${relativePath}`),
       title: meta.title,
       rank: meta.rank ?? "",
       publication_date: meta.publication_date,
@@ -176,7 +184,7 @@ const features = [
           {recentTop.map((n) => (
             <li>
               <a
-                href={`/laws/${n.identifier.toLowerCase()}`}
+                href={`/laws/${n.id}`}
                 class="flex items-start gap-4 px-5 py-4 hover:bg-accent/50 transition-colors group"
               >
                 <div class="flex-1 min-w-0">

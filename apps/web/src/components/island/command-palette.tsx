@@ -91,7 +91,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
     window.location.href = url;
   };
 
-  const lawUrl = (h: Hit) => `/laws/${h.id.toLowerCase()}`;
+  const lawUrl = (h: Hit) => `/laws/${h.id}`;
 
   return (
     <CommandDialog
@@ -142,16 +142,16 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             <CommandSeparator />
 
             <CommandGroup heading="Key documents">
-              <CommandItem onSelect={() => go("/laws/con-1993")}>
+              <CommandItem onSelect={() => go("/laws/pe-con-1993")}>
                 <LandmarkIcon />
                 Constitución Política del Perú (1993)
                 <span className="text-muted-foreground ml-auto text-xs">32 versions</span>
               </CommandItem>
-              <CommandItem onSelect={() => go("/laws/dleg-295-1984")}>
+              <CommandItem onSelect={() => go("/laws/pe-dleg-295-1984")}>
                 <GavelIcon />
                 Código Civil
               </CommandItem>
-              <CommandItem onSelect={() => go("/laws/dleg-635-1991")}>
+              <CommandItem onSelect={() => go("/laws/pe-dleg-635-1991")}>
                 <GavelIcon />
                 Código Penal
               </CommandItem>

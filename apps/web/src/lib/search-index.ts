@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { collectAllNormFiles, parseFrontmatter } from "./laws";
+import { collectAllNormFiles, normUniqueId, parseFrontmatter } from "./laws";
 
 export interface SearchableLaw {
   identifier: string;
@@ -94,8 +94,9 @@ export function buildCompactSearchIndex(): CompactLaw[] {
     // national norms, which carry real full text. Cuts the index ~50% at 21K norms.
     const cleanedBody = jurisdiction === "pe" ? cleanBodyForSearch(body).slice(0, 150) : "";
 
+    const id = normUniqueId(`${absDir.split("/").pop() ?? ""}/${relativePath}`);
     const law: CompactLaw = {
-      id: meta.identifier,
+      id,
       t: meta.title,
       r: meta.rank || "",
       f: meta.publication_date || "",
