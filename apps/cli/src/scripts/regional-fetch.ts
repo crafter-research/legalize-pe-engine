@@ -78,26 +78,37 @@ export function parseListingPage(html: string, slug: string, typeSlug: string): 
   return items;
 }
 
-async function fetchPage(slug: string, typeSlug: string, page: number): Promise<string> {
-  const url = `${GOBPE}/institucion/${slug}/normas-legales/tipos/${typeSlug}?page=${page}`;
+async function fetchPage(slug: string, typeSlug: string, sheet: number): Promise<string> {
+  // gob.pe paginates via `&sheet=N` (with page=1 constant). `?page=N` alone is IGNORED.
+  const url = `${GOBPE}/institucion/${slug}/normas-legales/tipos/${typeSlug}?page=1&sheet=${sheet}`;
   const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(25000) });
   return res.ok ? res.text() : "";
 }
 
-/** Walk all pages of one type until a page yields no cards (or maxPages). */
+/** Read the max `sheet=N` from the pagination links on a listing page (total page count). */
+export function maxSheet(html: string): number {
+  // hrefs are HTML-encoded (`?page=1&amp;sheet=121`), so match `sheet=N` regardless of the
+  // preceding char (a bare `[?&]sheet=` misses `&amp;sheet=`, where the prefix is `;`).
+  const sheets = [...html.matchAll(/sheet=(\d+)/g)].map((m) => Number(m[1]));
+  return sheets.length ? Math.max(...sheets) : 1;
+}
+
+/** Walk all sheets of one type. Discovers total sheet count from page 1, caps at maxPages. */
 export async function fetchType(slug: string, typeSlug: string, maxPages: number): Promise<RegionalItem[]> {
   const out: RegionalItem[] = [];
   const seen = new Set<string>();
-  for (let page = 1; page <= maxPages; page++) {
-    const html = await fetchPage(slug, typeSlug, page);
+  const first = await fetchPage(slug, typeSlug, 1);
+  const total = Math.min(maxSheet(first), maxPages);
+  for (let sheet = 1; sheet <= total; sheet++) {
+    const html = sheet === 1 ? first : await fetchPage(slug, typeSlug, sheet);
     const items = parseListingPage(html, slug, typeSlug).filter((it) => {
       if (seen.has(it.detail_url)) return false;
       seen.add(it.detail_url);
       return true;
     });
-    if (items.length === 0) break;
+    if (items.length === 0 && sheet > 1) break; // safety: empty sheet = end
     out.push(...items);
-    await sleep(1000);
+    if (sheet < total) await sleep(1000);
   }
   return out;
 }
