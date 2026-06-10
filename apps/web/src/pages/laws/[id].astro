@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Layout from "@/layouts/Layout.astro";
 import { buildIdToFileMap, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { formatDateLong } from "@/lib/utils";
 import { CalendarIcon, ExternalLinkIcon, FileTextIcon, GitCommitIcon } from "lucide-react";
 import { marked } from "marked";
@@ -51,7 +52,7 @@ marked.use({
   },
 });
 
-const html = await marked(bodyStripped);
+const html = sanitizeHtml(await marked(bodyStripped));
 
 const RANK_LABELS_EN: Record<string, string> = {
   constitucion: "Constitution",
