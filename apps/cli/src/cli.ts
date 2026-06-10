@@ -242,6 +242,21 @@ regional
     });
   });
 
+regional
+  .command("fulltext")
+  .description("Enrich regional skeleton norms with full text from their gob.pe PDF (pdftotext)")
+  .requiredOption("--iso <code>", "Jurisdiction, e.g. pe-tac")
+  .option("--corpus <path>", "Corpus repo path", "../legalize-pe")
+  .option("--max <n>", "Max norms to process (pilot)")
+  .action(async (opts: { iso: string; corpus: string; max?: string }) => {
+    const { runRegionalFulltext } = await import("./scripts/regional-fulltext.ts");
+    await runRegionalFulltext({
+      iso: opts.iso,
+      corpus: resolve(opts.corpus),
+      ...(opts.max ? { max: Number(opts.max) } : {}),
+    });
+  });
+
 const catalog = program
   .command("catalog")
   .description("Datos Abiertos catalog — coverage denominator + CatalogCrossrefFetcher data");
