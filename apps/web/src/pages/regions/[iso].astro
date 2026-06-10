@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/layouts/Layout.astro";
-import { collectAllNormFiles, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import {
+  collectAllNormFiles,
+  jurisdictionLabels,
+  normUniqueId,
+  parseFrontmatter,
+} from "@/lib/laws";
 
 export async function getStaticPaths() {
   const seen = new Set<string>();
@@ -16,7 +21,13 @@ export async function getStaticPaths() {
 
 const { iso } = Astro.params;
 
-type Norm = { identifier: string; title: string; rank: string; publication_date: string };
+type Norm = {
+  identifier: string;
+  id: string;
+  title: string;
+  rank: string;
+  publication_date: string;
+};
 const norms: Norm[] = [];
 for (const { absDir, relativePath } of collectAllNormFiles()) {
   if ((absDir.split("/").pop() ?? "") !== iso) continue;
@@ -26,6 +37,7 @@ for (const { absDir, relativePath } of collectAllNormFiles()) {
     if (!meta.title || !meta.identifier) continue;
     norms.push({
       identifier: meta.identifier,
+      id: normUniqueId(`${absDir.split("/").pop() ?? ""}/${relativePath}`),
       title: meta.title,
       rank: meta.rank ?? "",
       publication_date: meta.publication_date ?? "",
@@ -64,7 +76,7 @@ const name = jurisdictionLabels[iso ?? ""] ?? iso;
         {norms.map((n) => (
           <li>
             <a
-              href={`/laws/${n.identifier.toLowerCase()}`}
+              href={`/laws/${n.id}`}
               class="flex items-start gap-4 px-5 py-4 hover:bg-accent/50 transition-colors group"
             >
               <div class="flex-1 min-w-0">

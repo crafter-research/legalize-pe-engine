@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { shouldSkipFile } from "./constants";
@@ -54,8 +54,31 @@ export function getAllMdFiles(dir: string, baseDir: string = dir): string[] {
 }
 
 /**
- * Build a map of `identifier → absolute path to the .md file` across ALL jurisdictions
- * (national pe/ + each pe-{iso}/ regional dir).
+ * Globally-unique id for a norm, derived from its path relative to the corpus root
+ * (jurisdiction dir + file). Paths are unique, so ids never collide — unlike the
+ * human `identifier`, which recurs across jurisdictions (e.g. 001-2026).
+ *
+ *   pe-are/001-2026.md            → pe-are-001-2026
+ *   pe/DECRETO_LEGISLATIVO-295.md → pe-decreto-legislativo-295
+ *
+ * The full relative path is `<jurisdictionDir>/<relativePath>` so the jurisdiction
+ * prefix is part of the id. Output always matches `^[a-z0-9-]+$`.
+ */
+export function normUniqueId(relativePath: string): string {
+  return relativePath
+    .replace(/\.md$/, "")
+    .replace(/\//g, "-")
+    .toLowerCase()
+    .replace(/_/g, "-")
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Build a map of `unique id → absolute path to the .md file` across ALL jurisdictions
+ * (national pe/ + each pe-{iso}/ regional dir). Keyed ONLY by `normUniqueId`, which is
+ * unique per file — so colliding human identifiers no longer drop pages.
  *
  * For Astro routes, use it like:
  *   const map = buildIdToFileMap()
@@ -66,16 +89,9 @@ export function buildIdToFileMap(_dirOrUnused?: string): Map<string, string> {
   const map = new Map<string, string>();
   for (const { absDir, relativePath } of collectAllNormFiles()) {
     const absPath = join(absDir, relativePath);
-    const content = readFileSync(absPath, "utf-8");
-    const { data } = matter(content);
-    const fm = data as LeyFrontmatter;
-    if (fm.identifier) {
-      map.set(fm.identifier, absPath);
-    }
-    const idFromFilename = relativePath.replace(/\.md$/, "").replace(/\//g, "-");
-    if (!map.has(idFromFilename)) {
-      map.set(idFromFilename, absPath);
-    }
+    const jurisdiction = absDir.split("/").pop() ?? "";
+    const id = normUniqueId(`${jurisdiction}/${relativePath}`);
+    map.set(id, absPath);
   }
   return map;
 }
