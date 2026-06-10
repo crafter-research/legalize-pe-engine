@@ -93,22 +93,25 @@ export function maxSheet(html: string): number {
   return sheets.length ? Math.max(...sheets) : 1;
 }
 
-/** Walk all sheets of one type. Discovers total sheet count from page 1, caps at maxPages. */
+/**
+ * Walk all sheets of one type until a sheet yields zero NEW cards (true end),
+ * capped at maxPages. Note: the pagination widget *windows* its sheet links
+ * (page 1 shows ~1-10, hiding the real last page), so maxSheet() is only a hint —
+ * the loop must terminate on an empty/all-duplicate sheet, not on maxSheet.
+ */
 export async function fetchType(slug: string, typeSlug: string, maxPages: number): Promise<RegionalItem[]> {
   const out: RegionalItem[] = [];
   const seen = new Set<string>();
-  const first = await fetchPage(slug, typeSlug, 1);
-  const total = Math.min(maxSheet(first), maxPages);
-  for (let sheet = 1; sheet <= total; sheet++) {
-    const html = sheet === 1 ? first : await fetchPage(slug, typeSlug, sheet);
+  for (let sheet = 1; sheet <= maxPages; sheet++) {
+    const html = await fetchPage(slug, typeSlug, sheet);
     const items = parseListingPage(html, slug, typeSlug).filter((it) => {
       if (seen.has(it.detail_url)) return false;
       seen.add(it.detail_url);
       return true;
     });
-    if (items.length === 0 && sheet > 1) break; // safety: empty sheet = end
+    if (items.length === 0) break; // no new cards = past the last sheet
     out.push(...items);
-    if (sheet < total) await sleep(1000);
+    await sleep(1000);
   }
   return out;
 }
