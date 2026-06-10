@@ -154,4 +154,39 @@ program
     });
   });
 
+const spij = program.command("spij").description("SPIJ national tier (free-access API crawl)");
+
+spij
+  .command("crawl")
+  .description("Recursively crawl the SPIJ index (materia compendios) into a norm registry")
+  .option("--seed <id>", "Index seed norm id (default: H682710 = Legislacion por Materia)")
+  .option("--max-depth <n>", "Max crawl depth from seed", "3")
+  .option("--out <path>", "Registry output path", "data/spij-registry.json")
+  .option("--corpus <path>", "Corpus repo path - publish leaf norms while crawling")
+  .action(async (opts: { seed?: string; maxDepth: string; out: string; corpus?: string }) => {
+    const { runCrawl } = await import("./scripts/spij-crawl.ts");
+    await runCrawl({
+      ...opts,
+      out: resolve(opts.out),
+      ...(opts.corpus ? { corpus: resolve(opts.corpus) } : {}),
+    });
+  });
+
+spij
+  .command("fetch")
+  .description("Fetch norms from a registry via detallenorma -> SPEC v0.2 (JSON, or commit to corpus)")
+  .requiredOption("--registry <path>", "Registry JSON from `spij crawl`")
+  .option("--limit <n>", "Fetch only first N norms")
+  .option("--out <path>", "Output dir for norm JSON (when not publishing)", "/tmp/spij-norms")
+  .option("--corpus <path>", "Corpus repo path - publish SPEC Markdown + commit (one per norm)")
+  .action(async (opts: { registry: string; limit?: string; out: string; corpus?: string }) => {
+    const { runFetch } = await import("./scripts/spij-crawl.ts");
+    await runFetch({
+      ...opts,
+      registry: resolve(opts.registry),
+      out: resolve(opts.out),
+      ...(opts.corpus ? { corpus: resolve(opts.corpus) } : {}),
+    });
+  });
+
 program.parse();
