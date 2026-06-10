@@ -1,0 +1,37 @@
+{
+  "grand": {
+    "published": 10131,
+    "skipped": 795,
+    "dateMissing": 0,
+    "failed": 0
+  },
+  "perJurisdiction": {
+    "pe-ama": 723,
+    "pe-anc": 478,
+    "pe-apu": 154,
+    "pe-are": 472,
+    "pe-aya": 134,
+    "pe-caj": 6,
+    "pe-cal": 390,
+    "pe-cus": 811,
+    "pe-huv": 1066,
+    "pe-huc": 1,
+    "pe-ica": 421,
+    "pe-jun": 356,
+    "pe-lal": 437,
+    "pe-lam": 195,
+    "pe-lim": 347,
+    "pe-lor": 703,
+    "pe-mdd": 380,
+    "pe-moq": 154,
+    "pe-pas": 499,
+    "pe-piu": 720,
+    "pe-pun": 166,
+    "pe-sam": 159,
+    "pe-tac": 101,
+    "pe-tum": 349,
+    "pe-uca": 601,
+    "pe-lim-met": 308
+  },
+  "at": "2026-06-10T18:33:35.313Z"
+}
