@@ -88,16 +88,21 @@ export function buildCompactSearchIndex(): CompactLaw[] {
 
     if (!meta.title || !meta.identifier) continue;
 
-    const cleanedBody = cleanBodyForSearch(body).slice(0, 150);
+    const jurisdiction = meta.jurisdiction || "pe";
+    // Regional norms are skeletons (body = title + source line) — their body preview
+    // adds no search value beyond the title, only weight. Keep the preview only for
+    // national norms, which carry real full text. Cuts the index ~50% at 21K norms.
+    const cleanedBody = jurisdiction === "pe" ? cleanBodyForSearch(body).slice(0, 150) : "";
 
     const law: CompactLaw = {
       id: meta.identifier,
       t: meta.title,
       r: meta.rank || "",
       f: meta.publication_date || "",
-      j: meta.jurisdiction || "pe",
       b: cleanedBody,
     };
+    // Omit j for national (the client defaults to "pe") to save bytes across ~11K entries.
+    if (jurisdiction !== "pe") law.j = jurisdiction;
 
     const status = meta.status || "in_force";
     if (status !== "in_force") {
