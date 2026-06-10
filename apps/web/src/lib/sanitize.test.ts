@@ -3,7 +3,7 @@ import { sanitizeHtml } from "./sanitize";
 
 describe("sanitizeHtml", () => {
   it("removes <script> tags and their content", () => {
-    const out = sanitizeHtml('<p>hola</p><script>alert(1)</script>');
+    const out = sanitizeHtml("<p>hola</p><script>alert(1)</script>");
     expect(out).not.toContain("<script");
     expect(out).not.toContain("alert(1)");
     expect(out).toContain("<p>hola</p>");
