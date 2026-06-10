@@ -195,6 +195,27 @@ program
     await runDiscoverTypes({ ...opts, ...(opts.out ? { out: resolve(opts.out) } : {}) });
   });
 
+const regional = program
+  .command("regional")
+  .description("Regional-tier (gob.pe, fetch-based, multi-type)");
+
+regional
+  .command("pilot")
+  .description("Fetch one jurisdiction's norms from gob.pe -> SPEC v0.2 JSON (no corpus writes)")
+  .requiredOption("--iso <code>", "pe-{iso} code, e.g. pe-are")
+  .option("--matrix <path>", "Coverage matrix from discover-types", "data/coverage-matrix.json")
+  .option("--out <path>", "Output dir for norm JSON", "/tmp/regional-pilot")
+  .option("--max-pages <n>", "Max listing pages per type", "1000")
+  .action(async (opts: { iso: string; matrix: string; out: string; maxPages: string }) => {
+    const { runRegionalPilot } = await import("./scripts/regional-fetch.ts");
+    await runRegionalPilot({
+      iso: opts.iso,
+      matrix: resolve(opts.matrix),
+      out: resolve(opts.out),
+      maxPages: Number(opts.maxPages),
+    });
+  });
+
 const catalog = program
   .command("catalog")
   .description("Datos Abiertos catalog — coverage denominator + CatalogCrossrefFetcher data");
