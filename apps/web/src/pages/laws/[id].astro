@@ -7,7 +7,13 @@ import Layout from "@/layouts/Layout.astro";
 import { buildIdToFileMap, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { formatDateLong } from "@/lib/utils";
-import { CalendarIcon, ExternalLinkIcon, FileTextIcon, GitCommitIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  ExternalLinkIcon,
+  FileTextIcon,
+  GitCommitIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import { marked } from "marked";
 
 export async function getStaticPaths() {
@@ -145,6 +151,14 @@ const readMinutes = Math.max(1, Math.round(wordCount / 220));
             </span>
           </div>
         </header>
+
+        <div class="mb-8 flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-4 py-3 text-xs text-muted-foreground leading-relaxed">
+          <TriangleAlertIcon className="size-3.5 mt-0.5 shrink-0" />
+          <p>
+            Not legal advice. This is a community-maintained copy for research — verify against the
+            official source before relying on it. Regional norm text may be OCR-extracted and contain errors.
+          </p>
+        </div>
 
         <Separator className="mb-8" />
 

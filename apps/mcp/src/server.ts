@@ -23,6 +23,11 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { CORPUS_REPO, loadCorpus } from "./corpus.ts";
 
+const DISCLAIMER =
+  "Not legal advice. Community-maintained copy for research — verify against the official source (`source` field) before relying on it. Regional norm text may be OCR-extracted and may contain errors.";
+const DISCLAIMER_SHORT = "Not legal advice — verify against each norm's official source.";
+const DESCRIPTION_SUFFIX = " Results are reference copies, not legal advice; cite the source.";
+
 const JURISDICTION_NAMES: Record<string, string> = {
   pe: "Nacional",
   "pe-ama": "Amazonas",
@@ -56,8 +61,7 @@ const JURISDICTION_NAMES: Record<string, string> = {
 const TOOLS = [
   {
     name: "search_norms",
-    description:
-      "Search Peruvian legal norms by keyword. Returns matching norms with id, title, rank, jurisdiction, date and official source. Filter by jurisdiction ('pe' national, 'pe-cus' Cusco, …) and/or rank.",
+    description: `Search Peruvian legal norms by keyword. Returns matching norms with id, title, rank, jurisdiction, date and official source. Filter by jurisdiction ('pe' national, 'pe-cus' Cusco, …) and/or rank.${DESCRIPTION_SUFFIX}`,
     inputSchema: {
       type: "object",
       properties: {
@@ -77,8 +81,7 @@ const TOOLS = [
   },
   {
     name: "get_norm",
-    description:
-      "Get the full text and metadata of one norm by its id (from search_norms). Returns SPEC v0.2 frontmatter + the Markdown body.",
+    description: `Get the full text and metadata of one norm by its id (from search_norms). Returns SPEC v0.2 frontmatter + the Markdown body.${DESCRIPTION_SUFFIX}`,
     inputSchema: {
       type: "object",
       properties: {
@@ -138,7 +141,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       status: n.status,
       source: n.source,
     }));
-    return text({ count: results.length, results });
+    return text({ disclaimer: DISCLAIMER_SHORT, count: results.length, results });
   }
 
   if (name === "get_norm") {
@@ -146,6 +149,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const n = byId.get(String(a.id));
     if (!n) return err(`No norm with id "${a.id}".`);
     const meta = {
+      disclaimer: DISCLAIMER,
       id: n.id,
       identifier: n.identifier,
       title: n.title,
