@@ -88,21 +88,28 @@ function listRasterPages(dir: string, prefix: string): string[] {
     .map((f) => join(dir, f));
 }
 
-function ocrPdf(pdfPath: string, opts: { maxPages: number; dpi: number; lang: string }): string {
+function ocrPdf(
+  pdfPath: string,
+  opts: { maxPages: number; dpi: number; lang: string; timeoutMs: number },
+): string {
   const dir = mkdtempSync(join(tmpdir(), "legalize-ocr-"));
   try {
     const prefix = "page";
-    const raster = spawnSync("pdftoppm", [
-      "-png",
-      "-r",
-      String(opts.dpi),
-      "-f",
-      "1",
-      "-l",
-      String(opts.maxPages),
-      pdfPath,
-      join(dir, prefix),
-    ]);
+    const raster = spawnSync(
+      "pdftoppm",
+      [
+        "-png",
+        "-r",
+        String(opts.dpi),
+        "-f",
+        "1",
+        "-l",
+        String(opts.maxPages),
+        pdfPath,
+        join(dir, prefix),
+      ],
+      { timeout: opts.timeoutMs },
+    );
     if (raster.status !== 0) return "";
 
     const pages = listRasterPages(dir, prefix);
@@ -111,6 +118,7 @@ function ocrPdf(pdfPath: string, opts: { maxPages: number; dpi: number; lang: st
       const out = spawnSync("tesseract", [page, "stdout", "-l", opts.lang, "--psm", "1"], {
         encoding: "utf-8",
         maxBuffer: 64 * 1024 * 1024,
+        timeout: opts.timeoutMs,
       });
       if (out.status === 0 && out.stdout) texts.push(out.stdout);
     }
@@ -128,6 +136,7 @@ export async function runRegionalFulltext(opts: {
   maxPages?: number;
   ocrDpi?: number;
   ocrLang?: string;
+  ocrTimeoutMs?: number;
 }) {
   const dir = join(opts.corpus, opts.iso);
   const files = readdirSync(dir)
@@ -137,6 +146,7 @@ export async function runRegionalFulltext(opts: {
   const maxPages = opts.maxPages ?? 15;
   const ocrDpi = opts.ocrDpi ?? 200;
   const ocrLang = opts.ocrLang ?? "spa+eng";
+  const ocrTimeoutMs = opts.ocrTimeoutMs ?? 120_000;
   const publisher = new GitPublisher(opts.corpus);
   const stats: Stats = {
     enriched: 0,
@@ -196,7 +206,7 @@ export async function runRegionalFulltext(opts: {
           await sleep(1000);
           continue;
         }
-        text = ocrPdf(tmp, { maxPages, dpi: ocrDpi, lang: ocrLang });
+        text = ocrPdf(tmp, { maxPages, dpi: ocrDpi, lang: ocrLang, timeoutMs: ocrTimeoutMs });
         sourceKind = "ocr";
         if (!isLegalText(text, minChars)) {
           stats.ocrFailed++;

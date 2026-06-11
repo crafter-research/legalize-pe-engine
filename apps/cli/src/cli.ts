@@ -251,6 +251,7 @@ regional
   .option("--max-pages <n>", "Max scanned PDF pages to OCR per norm", "15")
   .option("--ocr-dpi <n>", "Rasterization DPI for scanned PDFs", "200")
   .option("--ocr-lang <langs>", "Tesseract languages for OCR", "spa+eng")
+  .option("--ocr-timeout-ms <n>", "Rasterization and OCR timeout per command", "120000")
   .action(
     async (opts: {
       iso: string;
@@ -259,6 +260,7 @@ regional
       maxPages: string;
       ocrDpi: string;
       ocrLang: string;
+      ocrTimeoutMs: string;
     }) => {
       const { runRegionalFulltext } = await import("./scripts/regional-fulltext.ts");
       await runRegionalFulltext({
@@ -268,6 +270,7 @@ regional
         maxPages: Number(opts.maxPages),
         ocrDpi: Number(opts.ocrDpi),
         ocrLang: opts.ocrLang,
+        ocrTimeoutMs: Number(opts.ocrTimeoutMs),
       });
     },
   );
