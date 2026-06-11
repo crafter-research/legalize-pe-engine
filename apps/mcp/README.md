@@ -16,12 +16,19 @@ Desktop, Cursor, and Codex.
 ## Run
 
 The server reads the corpus from disk. Point `LEGALIZE_PE_CORPUS` at a clone of
-[`crafter-research/legalize-pe`](https://github.com/crafter-research/legalize-pe)
-(full history, not shallow — `get_norm_history` needs the commits):
+[`crafter-research/legalize-pe`](https://github.com/crafter-research/legalize-pe).
+
+**Zero setup:** if the corpus isn't present, the server clones it on first run to
+`~/.cache/legalize-pe` (full clone, so `get_norm_history` has commits). Just run it:
 
 ```bash
-git clone https://github.com/crafter-research/legalize-pe.git
-LEGALIZE_PE_CORPUS=$(pwd)/legalize-pe bun apps/mcp/src/server.ts
+bun apps/mcp/src/server.ts
+```
+
+To point at an existing clone instead, set `LEGALIZE_PE_CORPUS`:
+
+```bash
+LEGALIZE_PE_CORPUS=/path/to/legalize-pe bun apps/mcp/src/server.ts
 ```
 
 ## Claude Desktop / Cursor config
@@ -31,11 +38,13 @@ LEGALIZE_PE_CORPUS=$(pwd)/legalize-pe bun apps/mcp/src/server.ts
   "mcpServers": {
     "legalize-pe": {
       "command": "bun",
-      "args": ["/abs/path/legalize-pe-engine/apps/mcp/src/server.ts"],
-      "env": { "LEGALIZE_PE_CORPUS": "/abs/path/legalize-pe" }
+      "args": ["/abs/path/legalize-pe-engine/apps/mcp/src/server.ts"]
     }
   }
 }
+```
+
+(Add `"env": { "LEGALIZE_PE_CORPUS": "/abs/path/legalize-pe" }` to reuse an existing clone instead of the auto-cloned `~/.cache/legalize-pe`.)
 ```
 
 Then ask: *"search legalize-pe for norms about minería ilegal in Cusco"*, or
