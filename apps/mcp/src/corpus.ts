@@ -6,12 +6,31 @@
  * not depend on the web app. Set LEGALIZE_PE_CORPUS to the corpus repo path.
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { homedir } from "node:os";
 import { join, relative } from "node:path";
 import Fuse from "fuse.js";
 import matter from "gray-matter";
 
-export const CORPUS_REPO = process.env.LEGALIZE_PE_CORPUS ?? join(process.cwd(), "../legalize-pe");
+const CORPUS_GIT_URL = "https://github.com/crafter-research/legalize-pe.git";
+
+// Use an explicit path if given, else a stable cache dir so `bunx` works with zero setup.
+export const CORPUS_REPO =
+  process.env.LEGALIZE_PE_CORPUS ?? join(homedir(), ".cache", "legalize-pe");
+
+/** Clone the corpus on first run if it's not present (so the server is zero-setup).
+ *  Full clone (not shallow) so get_norm_history has commits to read. */
+export function ensureCorpus(): void {
+  if (existsSync(join(CORPUS_REPO, "pe"))) return;
+  console.error(`[legalize-pe-mcp] corpus not found at ${CORPUS_REPO} — cloning (one-time)…`);
+  const res = spawnSync("git", ["clone", CORPUS_GIT_URL, CORPUS_REPO], { stdio: "inherit" });
+  if (res.status !== 0) {
+    throw new Error(
+      `Failed to clone the corpus to ${CORPUS_REPO}. Set LEGALIZE_PE_CORPUS to an existing clone of ${CORPUS_GIT_URL}.`,
+    );
+  }
+}
 
 /** Globally-unique, URL-safe id derived from the corpus path (matches the web app). */
 export function normUniqueId(relativePath: string): string {
@@ -68,6 +87,7 @@ let cache: { norms: Norm[]; fuse: Fuse<Norm>; byId: Map<string, Norm> } | null =
 
 export function loadCorpus() {
   if (cache) return cache;
+  ensureCorpus();
   const norms: Norm[] = [];
   for (const dir of jurisdictionDirs()) {
     const absDir = join(CORPUS_REPO, dir);
