@@ -1,12 +1,12 @@
 ---
-import { readFileSync } from "node:fs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Layout from "@/layouts/Layout.astro";
-import { buildIdToFileMap, jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
+import { jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { formatDateLong } from "@/lib/utils";
+import idPathMap from "../../../public/id-path-map.json";
 import {
   CalendarIcon,
   ExternalLinkIcon,
@@ -16,18 +16,50 @@ import {
 } from "lucide-react";
 import { marked } from "marked";
 
-export async function getStaticPaths() {
-  const idToFile = buildIdToFileMap();
-  // Keys are already globally-unique, lowercased ids (normUniqueId), so no .toLowerCase() needed.
-  return [...idToFile.entries()].map(([id, absPath]) => ({
-    params: { id },
-    props: { absPath, originalId: id },
-  }));
+// On-demand rendering: ~21K norms are no longer pre-rendered at build time.
+// Each request resolves the id → corpus path via the bundled id-path-map.json,
+// fetches the markdown from GitHub raw, and renders it. ISR (configured in the
+// Vercel adapter) caches the result at the edge.
+export const prerender = false;
+
+const RAW_BASE = "https://raw.githubusercontent.com/crafter-research/legalize-pe/main";
+
+// A 404 page rendered inline. Returning a Response with a real body avoids
+// triggering Astro's internal 404-route rewrite, which performs a sub-request
+// that fails inside the on-demand serverless function.
+function notFound(): Response {
+  return new Response(
+    "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>404 — Not found</title><meta name=\"robots\" content=\"noindex\"></head><body style=\"font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem\"><h1>404</h1><p>No norm matches this identifier. <a href=\"/laws\">Browse all laws</a>.</p></body></html>",
+    { status: 404, headers: { "content-type": "text/html; charset=utf-8" } },
+  );
 }
 
-const { absPath, originalId } = Astro.props;
-const raw = readFileSync(absPath, "utf-8");
+const { id } = Astro.params;
+const originalId = id ?? "";
+const relativePath = id ? (idPathMap as Record<string, string>)[id] : undefined;
+
+if (!relativePath) {
+  return notFound();
+}
+
+let raw: string;
+try {
+  const res = await fetch(`${RAW_BASE}/${relativePath}`);
+  if (!res.ok) {
+    return notFound();
+  }
+  raw = await res.text();
+} catch (err) {
+  console.error("[laws/[id]] fetch failed", relativePath, err);
+  return new Response("Upstream fetch failed", { status: 502 });
+}
 const { meta, body } = parseFrontmatter(raw);
+
+// ISR / edge cache: serve cached for 24h, allow stale-while-revalidate for a week.
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
+);
 
 // The corpus sometimes stores a truncated title from the listing source
 // (gob.pe truncates to ~200 chars). Detect and clean.

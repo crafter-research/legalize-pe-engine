@@ -97,6 +97,30 @@ export function buildIdToFileMap(_dirOrUnused?: string): Map<string, string> {
 }
 
 /**
+ * Build a map of `unique id → corpus-relative path` across ALL jurisdictions.
+ *
+ * The value is the path relative to the corpus repo root, with original case
+ * preserved (GitHub raw URLs are case-sensitive):
+ *
+ *   pe-are-148-2026-gra-cr-arequipa → pe-are/148-2026-GRA-CR-AREQUIPA.md
+ *   pe-con-1993                     → pe/CON-1993.md
+ *
+ * Consumed at build time to emit `public/id-path-map.json`, which the on-demand
+ * detail page imports to resolve a route id to its raw GitHub path WITHOUT
+ * scanning the corpus at request time. Keyed by `normUniqueId` (same scheme as
+ * `buildIdToFileMap`), so ids match existing links.
+ */
+export function buildIdToRelativePathMap(): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const { absDir, relativePath } of collectAllNormFiles()) {
+    const jurisdiction = absDir.split("/").pop() ?? "";
+    const id = normUniqueId(`${jurisdiction}/${relativePath}`);
+    map[id] = `${jurisdiction}/${relativePath}`;
+  }
+  return map;
+}
+
+/**
  * Path to the corpus repo root.
  *
  * Layout assumption:

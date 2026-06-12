@@ -8,7 +8,7 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
   site: "https://legalize-pe.crafter.ing",
   output: "static",
-  adapter: vercel({ imageService: "passthrough" }),
+  adapter: vercel({ imageService: "passthrough", isr: { expiration: 86400 } }),
   vite: {
     plugins: [tailwindcss()],
   },
