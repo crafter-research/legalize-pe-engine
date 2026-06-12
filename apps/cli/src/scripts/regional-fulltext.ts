@@ -42,8 +42,12 @@ async function fetchText(url: string): Promise<string> {
 
 /** Extract the first gob.pe CDN PDF URL from a detail page. */
 export function extractPdfUrl(detailHtml: string): string | null {
-  const m = detailHtml.match(/cdn\.www\.gob\.pe\/uploads\/document\/file\/\d+\/[^"'\s]+\.pdf/);
-  return m ? `https://${m[0]}` : null;
+  const m = detailHtml.match(
+    /(?:https?:\/\/)?cdn\.www\.gob\.pe\/uploads\/document\/file\/\d+\/[^"'\s<>]+?\.pdf_?(?:\?[^"'\s<>]+)?/i,
+  );
+  if (!m) return null;
+  const url = m[0].replace(/&amp;/g, "&");
+  return url.startsWith("http") ? url : `https://${url}`;
 }
 
 /** Clean pdftotext output of El Peruano gazette boilerplate into a readable body. */
