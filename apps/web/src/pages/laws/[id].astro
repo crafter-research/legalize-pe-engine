@@ -40,6 +40,16 @@ const datePrecision = meta.date_precision ?? "day";
 // Strip the first H1 from the body if it duplicates the frontmatter title.
 const bodyStripped = body.replace(/^\s*#\s+.+\n+/, "");
 
+// Cap the rendered body: marked() + DOMPurify on huge norms (big codes, long
+// OCR'd documents) take minutes per page, stalling the static build past
+// Vercel's build limit. Truncate very long bodies for render; the full text
+// stays in the corpus and the official source is always linked.
+const MAX_RENDER_CHARS = 45000;
+const bodyForRender =
+  bodyStripped.length > MAX_RENDER_CHARS
+    ? `${bodyStripped.slice(0, MAX_RENDER_CHARS)}\n\n---\n\n*Texto truncado por su extensión. Consulta el texto completo en la fuente oficial (enlace arriba).*`
+    : bodyStripped;
+
 marked.use({
   renderer: {
     heading(
@@ -59,7 +69,7 @@ marked.use({
   },
 });
 
-const html = sanitizeHtml(await marked(bodyStripped));
+const html = sanitizeHtml(await marked(bodyForRender));
 
 const RANK_LABELS_EN: Record<string, string> = {
   constitucion: "Constitution",
