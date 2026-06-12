@@ -248,6 +248,7 @@ regional
   .requiredOption("--iso <code>", "Jurisdiction, e.g. pe-tac")
   .option("--corpus <path>", "Corpus repo path", "../legalize-pe")
   .option("--max <n>", "Max norms to process (pilot)")
+  .option("--min-chars <n>", "Minimum compact text chars for legal-text validation", "500")
   .option("--max-pages <n>", "Max scanned PDF pages to OCR per norm", "15")
   .option("--ocr-dpi <n>", "Rasterization DPI for scanned PDFs", "200")
   .option("--ocr-lang <langs>", "Tesseract languages for OCR", "spa+eng")
@@ -257,6 +258,7 @@ regional
       iso: string;
       corpus: string;
       max?: string;
+      minChars: string;
       maxPages: string;
       ocrDpi: string;
       ocrLang: string;
@@ -267,6 +269,7 @@ regional
         iso: opts.iso,
         corpus: resolve(opts.corpus),
         ...(opts.max ? { max: Number(opts.max) } : {}),
+        minChars: Number(opts.minChars),
         maxPages: Number(opts.maxPages),
         ocrDpi: Number(opts.ocrDpi),
         ocrLang: opts.ocrLang,

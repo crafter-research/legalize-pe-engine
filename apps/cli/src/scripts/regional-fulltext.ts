@@ -161,6 +161,11 @@ export async function runRegionalFulltext(opts: {
   };
   const needsOcrIds: string[] = [];
   const tmp = join(tmpdir(), `legalize-pdf-${opts.iso}.pdf`);
+  const writeProgress = () => {
+    process.stdout.write(
+      `\r[fulltext] ${opts.iso} enriched=${stats.enriched} born_digital=${stats.bornDigital} ocr=${stats.ocrEnriched} needs_ocr=${stats.needsOcr} ocr_failed=${stats.ocrFailed} ocr_limited=${stats.ocrPageLimited} no_pdf=${stats.noPdf} failed=${stats.failed}  `,
+    );
+  };
 
   let processed = 0;
   for (const file of files) {
@@ -179,6 +184,7 @@ export async function runRegionalFulltext(opts: {
       const pdfUrl = extractPdfUrl(detail);
       if (!pdfUrl) {
         stats.noPdf++;
+        writeProgress();
         await sleep(1000);
         continue;
       }
@@ -186,6 +192,7 @@ export async function runRegionalFulltext(opts: {
       const dl = spawnSync("curl", ["-sL", "-A", UA, "-m", "60", "-o", tmp, pdfUrl]);
       if (dl.status !== 0) {
         stats.failed++;
+        writeProgress();
         continue;
       }
       const out = spawnSync("pdftotext", ["-q", tmp, "-"], {
@@ -203,6 +210,7 @@ export async function runRegionalFulltext(opts: {
         if (pageCount > maxPages) {
           stats.ocrPageLimited++;
           needsOcrIds.push(normId);
+          writeProgress();
           await sleep(1000);
           continue;
         }
@@ -211,6 +219,7 @@ export async function runRegionalFulltext(opts: {
         if (!isLegalText(text, minChars)) {
           stats.ocrFailed++;
           needsOcrIds.push(normId);
+          writeProgress();
           await sleep(1000);
           continue;
         }
@@ -234,13 +243,12 @@ export async function runRegionalFulltext(opts: {
       stats.enriched++;
       if (sourceKind === "born-digital") stats.bornDigital++;
       else stats.ocrEnriched++;
-      process.stdout.write(
-        `\r[fulltext] ${opts.iso} enriched=${stats.enriched} born_digital=${stats.bornDigital} ocr=${stats.ocrEnriched} needs_ocr=${stats.needsOcr} ocr_failed=${stats.ocrFailed} ocr_limited=${stats.ocrPageLimited} no_pdf=${stats.noPdf} failed=${stats.failed}  `,
-      );
+      writeProgress();
       await sleep(1000);
     } catch (err) {
       stats.failed++;
       console.error(`\n[fulltext] ${relPath} failed: ${err instanceof Error ? err.message : err}`);
+      writeProgress();
     }
   }
   console.log(`\n[fulltext] ${opts.iso} DONE. ${JSON.stringify(stats)}`);
