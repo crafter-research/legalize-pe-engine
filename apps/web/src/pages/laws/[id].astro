@@ -6,7 +6,6 @@ import Layout from "@/layouts/Layout.astro";
 import { jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { formatDateLong } from "@/lib/utils";
-import idPathMap from "../../../public/id-path-map.json";
 import {
   CalendarIcon,
   ExternalLinkIcon,
@@ -15,6 +14,7 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 import { marked } from "marked";
+import idPathMap from "../../../public/id-path-map.json";
 
 // On-demand rendering: ~21K norms are no longer pre-rendered at build time.
 // Each request resolves the id → corpus path via the bundled id-path-map.json,
@@ -29,7 +29,7 @@ const RAW_BASE = "https://raw.githubusercontent.com/crafter-research/legalize-pe
 // that fails inside the on-demand serverless function.
 function notFound(): Response {
   return new Response(
-    "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>404 — Not found</title><meta name=\"robots\" content=\"noindex\"></head><body style=\"font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem\"><h1>404</h1><p>No norm matches this identifier. <a href=\"/laws\">Browse all laws</a>.</p></body></html>",
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>404 — Not found</title><meta name="robots" content="noindex"></head><body style="font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem"><h1>404</h1><p>No norm matches this identifier. <a href="/laws">Browse all laws</a>.</p></body></html>',
     { status: 404, headers: { "content-type": "text/html; charset=utf-8" } },
   );
 }
