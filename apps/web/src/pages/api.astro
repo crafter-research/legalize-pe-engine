@@ -7,36 +7,43 @@ const endpoints = [
     method: "GET",
     path: "/api/normas/:id/history",
     description: "Returns the full commit history for a norm.",
+    key: "api.descHistory",
   },
   {
     method: "GET",
     path: "/api/normas/:id/at/:commit",
     description: "Returns the file content at a specific commit.",
+    key: "api.descAt",
   },
   {
     method: "GET",
     path: "/api/normas/:id/diff?from=&to=",
     description: "Returns a unified diff between two commits.",
+    key: "api.descDiff",
   },
   {
     method: "GET",
     path: "/api/normas/:id/compare?from=&to=",
     description: "Returns a side-by-side comparison between two commits.",
+    key: "api.descCompare",
   },
   {
     method: "GET",
     path: "/api/og/:slug",
     description: "Generates an Open Graph image for a norm or page.",
+    key: "api.descOg",
   },
   {
     method: "GET",
     path: "/api/search/smart?q=",
     description: "Smart search over the corpus index.",
+    key: "api.descSearch",
   },
   {
     method: "GET",
     path: "/feed.xml",
     description: "RSS feed of the latest norms.",
+    key: "api.descFeed",
   },
 ];
 ---
@@ -44,9 +51,9 @@ const endpoints = [
 <Layout title="API · Legalize PE" description="REST endpoints for git history, diffs, and search over the Peruvian legal corpus.">
   <section class="border-b border-border/60">
     <div class="mx-auto max-w-3xl px-4 sm:px-6 py-12 lg:py-16">
-      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">API</p>
-      <h1 class="text-4xl md:text-6xl tracking-tight leading-none">REST endpoints</h1>
-      <p class="mt-4 text-muted-foreground leading-relaxed">
+      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="api.kicker">API</p>
+      <h1 class="text-4xl md:text-6xl tracking-tight leading-none" data-i18n="api.title">REST endpoints</h1>
+      <p class="mt-4 text-muted-foreground leading-relaxed" data-i18n="api.intro">
         Read-only access to commit history, diffs, and search. All endpoints return JSON. Public, no auth.
       </p>
     </div>
@@ -61,12 +68,12 @@ const endpoints = [
               <Badge variant="outline" className="font-id text-xs">{e.method}</Badge>
               <code class="font-id text-sm">{e.path}</code>
             </div>
-            <p class="text-sm text-muted-foreground">{e.description}</p>
+            <p class="text-sm text-muted-foreground" data-i18n={e.key}>{e.description}</p>
           </li>
         ))}
       </ul>
 
-      <p class="mt-6 text-sm text-muted-foreground">
+      <p class="mt-6 text-sm text-muted-foreground" data-i18n="api.footer">
         Want a richer API? Clone the <a href="https://github.com/crafter-research/legalize-pe" class="underline underline-offset-4 text-foreground">corpus repo</a> and run any tool that reads git history. The whole API is just <code class="font-id text-foreground">git log</code> and <code class="font-id text-foreground">git diff</code> under the hood.
       </p>
     </div>

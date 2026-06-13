@@ -1,0 +1,61 @@
+---
+// Inline i18n bootstrap. Runs in <head> before paint to:
+//   1. resolve the active language (localStorage > browser > default),
+//   2. set <html lang>,
+//   3. expose the dictionary + window.__applyI18n() so the end-of-body call
+//      and the React language toggle can swap UI strings.
+// Only elements tagged with data-i18n / data-i18n-attr are touched; the legal
+// corpus body (rendered Spanish Markdown) is never marked, so it stays intact.
+import { DEFAULT_LANG, translations } from "@/lib/i18n";
+
+const dict = JSON.stringify(translations);
+---
+
+<script is:inline define:vars={{ dict, fallback: DEFAULT_LANG }}>
+  (function () {
+    const T = JSON.parse(dict);
+
+    function resolve() {
+      try {
+        const stored = localStorage.getItem("lang");
+        if (stored === "es" || stored === "en") return stored;
+      } catch (e) {
+        /* ignore */
+      }
+      const nav = (navigator.language || "").toLowerCase();
+      if (nav.startsWith("es")) return "es";
+      if (nav.startsWith("en")) return "en";
+      return fallback;
+    }
+
+    function apply(lang) {
+      const els = document.querySelectorAll("[data-i18n]");
+      for (let i = 0; i < els.length; i++) {
+        const el = els[i];
+        const entry = T[el.getAttribute("data-i18n")];
+        if (entry && entry[lang] != null) el.innerHTML = entry[lang];
+      }
+      const attrEls = document.querySelectorAll("[data-i18n-attr]");
+      for (let i = 0; i < attrEls.length; i++) {
+        const el = attrEls[i];
+        const pairs = el.getAttribute("data-i18n-attr").split(";");
+        for (let j = 0; j < pairs.length; j++) {
+          const pair = pairs[j];
+          const idx = pair.indexOf(":");
+          if (idx < 0) continue;
+          const attr = pair.slice(0, idx).trim();
+          const entry = T[pair.slice(idx + 1).trim()];
+          if (entry && entry[lang] != null) el.setAttribute(attr, entry[lang]);
+        }
+      }
+      document.documentElement.lang = lang;
+      window.__LANG__ = lang;
+    }
+
+    const lang = resolve();
+    window.__LANG__ = lang;
+    window.__I18N__ = T;
+    document.documentElement.lang = lang;
+    window.__applyI18n = apply;
+  })();
+</script>

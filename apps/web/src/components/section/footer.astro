@@ -10,7 +10,7 @@ const year = new Date().getFullYear();
           <span class="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-base leading-none">L</span>
           <span class="text-base leading-none tracking-tight">Legalize<span class="text-muted-foreground">.pe</span></span>
         </div>
-        <p class="text-sm text-muted-foreground leading-relaxed">
+        <p class="text-sm text-muted-foreground leading-relaxed" data-i18n="footer.tagline">
           Peruvian legislation as a git repository. Every law a file, every reform a commit.
           Community-maintained by <a href="https://github.com/crafter-research" class="underline underline-offset-4 hover:text-foreground">Crafter Research</a>.
         </p>
@@ -18,14 +18,14 @@ const year = new Date().getFullYear();
 
       <div class="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
         <div class="space-y-1.5">
-          <p class="font-medium text-foreground">Browse</p>
-          <a href="/laws" class="block text-muted-foreground hover:text-foreground">Laws</a>
-          <a href="/regions" class="block text-muted-foreground hover:text-foreground">Regions</a>
-          <a href="/audit" class="block text-muted-foreground hover:text-foreground">Audit</a>
+          <p class="font-medium text-foreground" data-i18n="footer.browse">Browse</p>
+          <a href="/laws" class="block text-muted-foreground hover:text-foreground" data-i18n="nav.laws">Laws</a>
+          <a href="/regions" class="block text-muted-foreground hover:text-foreground" data-i18n="nav.regions">Regions</a>
+          <a href="/audit" class="block text-muted-foreground hover:text-foreground" data-i18n="nav.audit">Audit</a>
         </div>
         <div class="space-y-1.5">
-          <p class="font-medium text-foreground">Build</p>
-          <a href="/api" class="block text-muted-foreground hover:text-foreground">API</a>
+          <p class="font-medium text-foreground" data-i18n="footer.build">Build</p>
+          <a href="/api" class="block text-muted-foreground hover:text-foreground" data-i18n="nav.api">API</a>
           <a href="/feed.xml" class="block text-muted-foreground hover:text-foreground">RSS</a>
           <a href="https://github.com/crafter-research/legalize-pe" class="block text-muted-foreground hover:text-foreground">GitHub</a>
         </div>
@@ -34,9 +34,9 @@ const year = new Date().getFullYear();
 
     <div class="mt-8 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-muted-foreground">
       <p>
-        Content: public domain (DLeg 822 Art. 9). Code: MIT. © {year} Crafter Research.
+        <span data-i18n="footer.legal">Content: public domain (DLeg 822 Art. 9). Code: MIT.</span> © {year} Crafter Research.
       </p>
-      <p>
+      <p data-i18n="footer.federation">
         Part of the <a href="https://legalize.dev" class="underline underline-offset-4 hover:text-foreground">legalize.dev</a> federation.
       </p>
     </div>

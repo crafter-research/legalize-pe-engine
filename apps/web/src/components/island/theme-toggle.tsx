@@ -5,15 +5,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/use-lang";
 import { CheckIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark" | "system";
 
-const OPTIONS: Array<{ value: Theme; label: string; Icon: typeof SunIcon }> = [
-  { value: "light", label: "Light", Icon: SunIcon },
-  { value: "dark", label: "Dark", Icon: MoonIcon },
-  { value: "system", label: "System", Icon: MonitorIcon },
+const OPTIONS: Array<{ value: Theme; key: string; Icon: typeof SunIcon }> = [
+  { value: "light", key: "theme.light", Icon: SunIcon },
+  { value: "dark", key: "theme.dark", Icon: MoonIcon },
+  { value: "system", key: "theme.system", Icon: MonitorIcon },
 ];
 
 function applyTheme(theme: Theme) {
@@ -26,6 +28,7 @@ function applyTheme(theme: Theme) {
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("system");
+  const lang = useLang();
 
   useEffect(() => {
     const stored = (localStorage.getItem("theme") as Theme | null) ?? "system";
@@ -52,16 +55,16 @@ export function ThemeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon-sm" aria-label="Switch theme">
+          <Button variant="ghost" size="icon-sm" aria-label={t("theme.label", lang)}>
             <ActiveIcon />
           </Button>
         }
       />
       <DropdownMenuContent align="end" sideOffset={6}>
-        {OPTIONS.map(({ value, label, Icon }) => (
+        {OPTIONS.map(({ value, key, Icon }) => (
           <DropdownMenuItem key={value} onClick={() => choose(value)} className="gap-2">
             <Icon className="size-4" />
-            <span>{label}</span>
+            <span>{t(key, lang)}</span>
             {theme === value && <CheckIcon className="ml-auto size-3.5" />}
           </DropdownMenuItem>
         ))}

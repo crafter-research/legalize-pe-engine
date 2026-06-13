@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/use-lang";
 import { SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CommandPalette } from "./command-palette";
 
 export function CommandPaletteTrigger() {
   const [open, setOpen] = useState(false);
+  const lang = useLang();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -26,10 +29,10 @@ export function CommandPaletteTrigger() {
         size="sm"
         className="text-muted-foreground hidden md:inline-flex w-56 justify-start gap-2 font-normal"
         onClick={() => setOpen(true)}
-        aria-label="Open command palette"
+        aria-label={t("cmd.title", lang)}
       >
         <SearchIcon className="text-muted-foreground" />
-        <span className="flex-1 text-left">Search laws, regions...</span>
+        <span className="flex-1 text-left">{t("cmd.triggerPlaceholder", lang)}</span>
         <KbdGroup>
           <Kbd>⌘</Kbd>
           <Kbd>K</Kbd>
@@ -41,7 +44,7 @@ export function CommandPaletteTrigger() {
         size="icon-sm"
         className="md:hidden"
         onClick={() => setOpen(true)}
-        aria-label="Search"
+        aria-label={t("cmd.title", lang)}
       >
         <SearchIcon />
       </Button>

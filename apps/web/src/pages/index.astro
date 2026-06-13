@@ -75,13 +75,33 @@ const RANK_LABELS_EN: Record<string, string> = {
 };
 
 const stat = [
-  { label: "National norms", value: stats.national.toLocaleString(), hint: "Laws, DLeg, DS" },
-  { label: "Const. reforms", value: stats.reformasConst.toLocaleString(), hint: "1995 → 2024" },
-  { label: "Regional norms", value: stats.regional.toLocaleString(), hint: "25 GORE + Lima Met" },
+  {
+    label: "National norms",
+    labelKey: "home.statNational",
+    value: stats.national.toLocaleString(),
+    hint: "Laws, DLeg, DS",
+    hintKey: "home.statNationalHint",
+  },
+  {
+    label: "Const. reforms",
+    labelKey: "home.statReforms",
+    value: stats.reformasConst.toLocaleString(),
+    hint: "1995 → 2024",
+    hintKey: "home.statReformsHint",
+  },
+  {
+    label: "Regional norms",
+    labelKey: "home.statRegional",
+    value: stats.regional.toLocaleString(),
+    hint: "25 GORE + Lima Met",
+    hintKey: "home.statRegionalHint",
+  },
   {
     label: "Jurisdictions",
+    labelKey: "home.statJurisdictions",
     value: `${stats.jurisdictionsCovered}/26`,
     hint: "Sub-national coverage",
+    hintKey: "home.statJurisdictionsHint",
   },
 ];
 
@@ -89,17 +109,23 @@ const features = [
   {
     Icon: GitCommitIcon,
     title: "Every reform is a commit",
+    titleKey: "home.feat1Title",
     body: "The 1993 Constitution has 32 commits over the same file: one for the original text and one per amendment, dated correctly.",
+    bodyKey: "home.feat1Body",
   },
   {
     Icon: ScrollTextIcon,
     title: "Plain markdown, plain YAML",
+    titleKey: "home.feat2Title",
     body: "No proprietary format. Every norm is a single .md file with eight standard frontmatter fields you can parse in any language.",
+    bodyKey: "home.feat2Body",
   },
   {
     Icon: CodeIcon,
     title: "For agents and humans",
+    titleKey: "home.feat3Title",
     body: "Use it as LLM context, as research input, as a CLI argument, or browse it here. Public domain (DLeg 822 Art. 9).",
+    bodyKey: "home.feat3Body",
   },
 ];
 ---
@@ -110,25 +136,25 @@ const features = [
       <div class="max-w-3xl">
         <Badge variant="outline" className="mb-6 gap-1.5">
           <span class="size-1.5 rounded-full bg-status-in-force"></span>
-          Pre-1.0 · Community-maintained
+          <span data-i18n="home.badge">Pre-1.0 · Community-maintained</span>
         </Badge>
-        <h1 class="text-5xl md:text-7xl tracking-tighter leading-[0.95]">
+        <h1 class="text-5xl md:text-7xl tracking-tighter leading-[0.95]" data-i18n="home.hero">
           Peruvian law,<br />
           <span class="text-primary">as a git repo.</span>
         </h1>
         <p class="mt-6 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-          {stats.total.toLocaleString()} legal norms as Markdown files. Every reform is a commit
-          with the real publication date. Clone it, grep it, diff it, build on it.
+          {stats.total.toLocaleString()} <span data-i18n="home.heroSub">legal norms as Markdown files. Every reform is a commit
+          with the real publication date. Clone it, grep it, diff it, build on it.</span>
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
           <Button size="lg" className="gap-2">
             <a href="/laws" class="flex items-center gap-2">
-              Browse laws <ArrowRightIcon className="size-4" />
+              <span data-i18n="home.browseLaws">Browse laws</span> <ArrowRightIcon className="size-4" />
             </a>
           </Button>
           <Button variant="outline" size="lg" className="gap-2">
             <a href="https://github.com/crafter-research/legalize-pe" class="flex items-center gap-2">
-              <GitForkIcon className="size-4" /> Clone on GitHub
+              <GitForkIcon className="size-4" /> <span data-i18n="home.cloneGithub">Clone on GitHub</span>
             </a>
           </Button>
         </div>
@@ -141,9 +167,9 @@ const features = [
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 rounded-xl overflow-hidden">
         {stat.map((s) => (
           <div class="bg-card p-6 lg:p-8 flex flex-col gap-1.5">
-            <p class="text-xs text-muted-foreground uppercase tracking-wider">{s.label}</p>
+            <p class="text-xs text-muted-foreground uppercase tracking-wider" data-i18n={s.labelKey}>{s.label}</p>
             <p class="text-4xl md:text-5xl tracking-tight tabular-nums">{s.value}</p>
-            <p class="text-xs text-muted-foreground">{s.hint}</p>
+            <p class="text-xs text-muted-foreground" data-i18n={s.hintKey}>{s.hint}</p>
           </div>
         ))}
       </div>
@@ -153,18 +179,18 @@ const features = [
   <section class="border-b border-border/60">
     <div class="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24">
       <div class="max-w-2xl mb-12">
-        <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">What you get</p>
-        <h2 class="text-3xl md:text-5xl tracking-tight leading-tight">
+        <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="home.whatYouGet">What you get</p>
+        <h2 class="text-3xl md:text-5xl tracking-tight leading-tight" data-i18n="home.whatYouGetTitle">
           Legal infrastructure that&apos;s actually <em class="italic text-primary">accessible.</em>
         </h2>
       </div>
 
       <div class="grid md:grid-cols-3 gap-px bg-border/60 rounded-xl overflow-hidden">
-        {features.map(({ Icon, title, body }) => (
+        {features.map(({ Icon, title, titleKey, body, bodyKey }) => (
           <div class="bg-card p-8 flex flex-col gap-3">
             <Icon className="size-6 text-primary" />
-            <h3 class="text-2xl tracking-tight leading-tight">{title}</h3>
-            <p class="text-sm text-muted-foreground leading-relaxed">{body}</p>
+            <h3 class="text-2xl tracking-tight leading-tight" data-i18n={titleKey}>{title}</h3>
+            <p class="text-sm text-muted-foreground leading-relaxed" data-i18n={bodyKey}>{body}</p>
           </div>
         ))}
       </div>
@@ -176,11 +202,11 @@ const features = [
       <div class="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24">
         <div class="flex items-end justify-between mb-8">
           <div>
-            <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">Recent</p>
-            <h2 class="text-3xl md:text-4xl tracking-tight">Latest norms in the corpus</h2>
+            <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="home.recent">Recent</p>
+            <h2 class="text-3xl md:text-4xl tracking-tight" data-i18n="home.recentTitle">Latest norms in the corpus</h2>
           </div>
           <a href="/laws" class="hidden md:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            All laws <ArrowRightIcon className="size-3.5" />
+            <span data-i18n="home.allLaws">All laws</span> <ArrowRightIcon className="size-3.5" />
           </a>
         </div>
 
@@ -194,7 +220,7 @@ const features = [
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1 flex-wrap">
                     <Badge variant="outline" className="font-id text-xs">{n.identifier}</Badge>
-                    <Badge variant="secondary" className="text-xs">{RANK_LABELS_EN[n.rank] ?? n.rank}</Badge>
+                    <Badge variant="secondary" className="text-xs"><span data-i18n={`rank.${n.rank}`}>{RANK_LABELS_EN[n.rank] ?? n.rank}</span></Badge>
                     {n.jurisdiction !== "pe" && (
                       <Badge variant="outline" className="text-xs">{jurisdictionLabels[n.jurisdiction] ?? n.jurisdiction}</Badge>
                     )}
@@ -216,11 +242,11 @@ const features = [
     <div class="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24">
       <div class="grid md:grid-cols-2 gap-12 items-start">
         <div>
-          <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">Federation</p>
-          <h2 class="text-3xl md:text-5xl tracking-tight leading-tight">
+          <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="home.federation">Federation</p>
+          <h2 class="text-3xl md:text-5xl tracking-tight leading-tight" data-i18n="home.federationTitle">
             Part of <em class="italic">legalize.dev</em>
           </h2>
-          <p class="mt-4 text-muted-foreground leading-relaxed">
+          <p class="mt-4 text-muted-foreground leading-relaxed" data-i18n="home.federationBody">
             Same spec, same commit conventions, same git-native workflow as Spain, Portugal,
             Italy, Korea, and 30+ other countries. Community-maintained by Crafter Research.
           </p>
@@ -229,13 +255,13 @@ const features = [
               <a href="https://legalize.dev">legalize.dev →</a>
             </Button>
             <Button variant="ghost" size="sm">
-              <a href="/about">Why this exists</a>
+              <a href="/about" data-i18n="home.whyExists">Why this exists</a>
             </Button>
           </div>
         </div>
 
         <div class="bg-card border border-border/60 rounded-xl p-6 font-id text-xs leading-relaxed overflow-x-auto">
-          <p class="text-muted-foreground mb-3"># Clone, grep, diff. That&apos;s the API.</p>
+          <p class="text-muted-foreground mb-3" data-i18n="home.apiComment"># Clone, grep, diff. That&apos;s the API.</p>
           <p><span class="text-muted-foreground">$</span> git clone https://github.com/crafter-research/legalize-pe</p>
           <p><span class="text-muted-foreground">$</span> grep -A 20 "Artículo 191" pe/CON-1993.md</p>
           <p><span class="text-muted-foreground">$</span> git log --oneline pe/CON-1993.md</p>

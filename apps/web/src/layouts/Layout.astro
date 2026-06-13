@@ -3,6 +3,7 @@ import { pwaInfo } from "virtual:pwa-info";
 import Analytics from "@vercel/analytics/astro";
 import "@/styles/globals.css";
 
+import I18nScript from "@/components/island/i18n-script.astro";
 import ThemeScript from "@/components/island/theme-script.astro";
 import Footer from "@/components/section/footer.astro";
 import Header from "@/components/section/header.astro";
@@ -36,6 +37,7 @@ const fullTitle = title.includes("Legalize PE") ? title : `${title} · Legalize 
     <meta name="generator" content={Astro.generator} />
 
     <ThemeScript />
+    <I18nScript />
 
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafaf9" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#211f1c" />
@@ -66,7 +68,7 @@ const fullTitle = title.includes("Legalize PE") ? title : `${title} · Legalize 
     {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
   </head>
   <body class="min-h-screen flex flex-col">
-    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground">
+    <a href="#main" data-i18n="layout.skip" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground">
       Skip to content
     </a>
 
@@ -77,6 +79,12 @@ const fullTitle = title.includes("Legalize PE") ? title : `${title} · Legalize 
     </main>
 
     <Footer />
+
+    <script is:inline>
+      // Apply translations after the DOM is parsed, before the browser paints,
+      // so non-default languages don't flash the authored fallback text.
+      if (window.__applyI18n && window.__LANG__) window.__applyI18n(window.__LANG__);
+    </script>
 
     <script>
       import { registerSW } from "virtual:pwa-register";

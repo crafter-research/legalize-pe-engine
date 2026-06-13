@@ -27,20 +27,20 @@ import Layout from "../layouts/Layout.astro";
         </svg>
       </div>
 
-      <h1>Sin conexión</h1>
-      <p>
+      <h1 data-i18n="offline.title">Sin conexión</h1>
+      <p data-i18n="offline.body">
         No pudimos cargar esta página porque no tienes conexión a internet.
       </p>
 
       <div class="actions">
-        <button type="button" class="retry-btn" onclick="window.location.reload()">
+        <button type="button" class="retry-btn" onclick="window.location.reload()" data-i18n="offline.retry">
           Reintentar
         </button>
-        <a href="/" class="home-link">Ir al inicio</a>
+        <a href="/" class="home-link" data-i18n="offline.home">Ir al inicio</a>
       </div>
 
       <div class="hint">
-        <p>
+        <p data-i18n="offline.hint">
           Las páginas que visitaste anteriormente pueden estar disponibles en caché.
           Prueba navegando desde el <a href="/">inicio</a>.
         </p>

@@ -7,67 +7,67 @@ import { ArrowRightIcon, GitForkIcon } from "lucide-react";
 <Layout title="About · Legalize PE" description="Why Legalize PE exists, who maintains it, and how to contribute.">
   <section class="border-b border-border/60">
     <div class="mx-auto max-w-3xl px-4 sm:px-6 py-16 lg:py-24">
-      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-4">About</p>
-      <h1 class="text-4xl md:text-6xl tracking-tight leading-[1.05]">Why this exists</h1>
+      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-4" data-i18n="about.kicker">About</p>
+      <h1 class="text-4xl md:text-6xl tracking-tight leading-[1.05]" data-i18n="about.title">Why this exists</h1>
       <div class="prose mt-8 text-[15px] leading-relaxed text-foreground/90 [&_h2]:[&_h2]:text-2xl [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-3 [&_p]:mb-5 [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4">
-        <p>
+        <p data-i18n="about.p1">
           Peruvian legislation is published, but it is not <em>accessible</em> as machine-readable, version-controlled data.
         </p>
-        <p>
+        <p data-i18n="about.p2">
           A citizen, lawyer, journalist, or AI agent that needs to know <strong>which legal rules apply to them</strong> faces a fragmented landscape: SPIJ has the national text but not the sub-national; El Peruano publishes reforms as new PDFs unlinked to their predecessors; 1,919 issuing authorities each have their own portal with their own schema; commercial providers charge for what is public domain.
         </p>
 
-        <h2>What this is</h2>
-        <p>
+        <h2 data-i18n="about.h2what">What this is</h2>
+        <p data-i18n="about.whatIntro">
           A two-repo system:
         </p>
         <ul class="list-disc pl-6 space-y-2 mb-5">
-          <li>
+          <li data-i18n="about.whatCorpus">
             <strong>Corpus</strong> at <a href="https://github.com/crafter-research/legalize-pe">crafter-research/legalize-pe</a>. Every Peruvian legal norm as a Markdown file with YAML frontmatter, following SPEC v0.2. Every reform is a git commit with the real publication date.
           </li>
-          <li>
+          <li data-i18n="about.whatEngine">
             <strong>Engine</strong> at <a href="https://github.com/crafter-research/legalize-pe-engine">crafter-research/legalize-pe-engine</a>. The CLI, this web app, the scrapers, and the recon IRs that produce the corpus. Pre-1.0.
           </li>
         </ul>
 
-        <h2>What makes it different</h2>
-        <p>
+        <h2 data-i18n="about.h2diff">What makes it different</h2>
+        <p data-i18n="about.diffSubnational">
           <strong>Sub-national coverage.</strong> Peru has 1,919 legally distinct issuing authorities: 25 regional governments, Lima Metropolitana, Callao, 196 provincial municipalities, and 1,695 district municipalities. SPIJ covers national legislation decently and almost nothing below it. This is the first attempt at a cohesive sub-national legal corpus aggregation for a Global South country.
         </p>
-        <p>
+        <p data-i18n="about.diffTimeline">
           <strong>Full Constitution timeline.</strong> <code class="font-id text-sm">git log pe/CON-1993.md</code> returns 32 commits with real author dates from 1993-12-30 to 2024-12-11. No other country in the legalize.dev federation has its constitution this granularly versioned.
         </p>
-        <p>
+        <p data-i18n="about.diffAgent">
           <strong>Agent-first engineering.</strong> Every step of the pipeline is invocable from a CLI. Recon writes a persisted IR per jurisdiction; runtime extraction is then zero-LLM and reproducible.
         </p>
 
-        <h2>Federation</h2>
-        <p>
+        <h2 data-i18n="about.h2fed">Federation</h2>
+        <p data-i18n="about.fedBody">
           Same spec, same commit conventions, same git-native workflow as 30+ other countries on <a href="https://legalize.dev">legalize.dev</a>. Community-maintained.
         </p>
 
-        <h2>License</h2>
-        <p>
+        <h2 data-i18n="about.h2license">License</h2>
+        <p data-i18n="about.licenseBody">
           The text of legal norms is public domain by force of law (Decreto Legislativo 822, Art. 9). Repository structure and tooling: MIT.
         </p>
 
-        <h2>Maintainers</h2>
+        <h2 data-i18n="about.h2maintainers">Maintainers</h2>
         <ul class="list-disc pl-6 space-y-1 mb-5">
-          <li><a href="https://github.com/Railly">Railly Hugo</a> (engine, recon, federation)</li>
-          <li><a href="https://github.com/shiarauzo">Shiara Arauzo</a> (design, frontend, initial corpus)</li>
+          <li data-i18n="about.maintRailly"><a href="https://github.com/Railly">Railly Hugo</a> (engine, recon, federation)</li>
+          <li data-i18n="about.maintShiara"><a href="https://github.com/shiarauzo">Shiara Arauzo</a> (design, frontend, initial corpus)</li>
         </ul>
-        <p>
+        <p data-i18n="about.partOf">
           Part of <a href="https://github.com/crafter-research">Crafter Research</a>.
         </p>
       </div>
 
       <div class="mt-10 flex flex-wrap gap-3">
         <Button size="lg" className="gap-2">
-          <a href="/laws" class="flex items-center gap-2">Browse laws <ArrowRightIcon className="size-4" /></a>
+          <a href="/laws" class="flex items-center gap-2"><span data-i18n="home.browseLaws">Browse laws</span> <ArrowRightIcon className="size-4" /></a>
         </Button>
         <Button variant="outline" size="lg" className="gap-2">
           <a href="https://github.com/crafter-research/legalize-pe" class="flex items-center gap-2">
-            <GitForkIcon className="size-4" /> GitHub
+            <GitForkIcon className="size-4" /> <span data-i18n="about.github">GitHub</span>
           </a>
         </Button>
       </div>

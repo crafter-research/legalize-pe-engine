@@ -29,24 +29,24 @@ const fmt = (n: number) => n.toLocaleString("es-PE");
   <section class="border-b border-border/60">
     <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16">
       <nav class="mb-6 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
-        <a href="/" class="hover:text-foreground transition-colors">Home</a>
+        <a href="/" class="hover:text-foreground transition-colors" data-i18n="nav.home">Home</a>
         <span aria-hidden>/</span>
-        <span class="text-foreground">Regions</span>
+        <span class="text-foreground" data-i18n="nav.regions">Regions</span>
       </nav>
-      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3">Sub-national tier</p>
-      <h1 class="text-4xl md:text-6xl tracking-tight leading-none">Regional jurisdictions</h1>
-      <p class="mt-4 max-w-2xl text-muted-foreground leading-relaxed">
+      <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="regions.kicker">Sub-national tier</p>
+      <h1 class="text-4xl md:text-6xl tracking-tight leading-none" data-i18n="regions.title">Regional jurisdictions</h1>
+      <p class="mt-4 max-w-2xl text-muted-foreground leading-relaxed" data-i18n="regions.intro">
         The first cohesive sub-national legal corpus for a Global South country —
         regional-government coverage no other Peruvian source offers.
       </p>
       <div class="mt-8 flex flex-wrap gap-x-10 gap-y-4">
         <div>
           <div class="text-3xl tabular-nums tracking-tight">{fmt(totalRegional)}</div>
-          <div class="text-xs text-muted-foreground uppercase tracking-wide">regional norms</div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wide" data-i18n="regions.statRegional">regional norms</div>
         </div>
         <div>
           <div class="text-3xl tabular-nums tracking-tight">{covered}<span class="text-muted-foreground text-xl">/{rows.length}</span></div>
-          <div class="text-xs text-muted-foreground uppercase tracking-wide">jurisdictions</div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wide" data-i18n="regions.statJurisdictions">jurisdictions</div>
         </div>
       </div>
     </div>
@@ -75,9 +75,9 @@ const fmt = (n: number) => n.toLocaleString("es-PE");
               <div class="flex items-center justify-between gap-2 text-xs">
                 <Badge variant="outline" className="font-id">{j.iso}</Badge>
                 {isCovered ? (
-                  <span class="tabular-nums text-muted-foreground">{fmt(j.count)} norms</span>
+                  <span class="tabular-nums text-muted-foreground">{fmt(j.count)} <span data-i18n="regions.normsSuffix">norms</span></span>
                 ) : (
-                  <span class="text-muted-foreground">Pending</span>
+                  <span class="text-muted-foreground" data-i18n="regions.pending">Pending</span>
                 )}
               </div>
             </a>
