@@ -1,6 +1,8 @@
 import { createGitService } from "@legalize-pe/git-reader";
 import { type NextRequest, NextResponse } from "next/server";
 
+// Returns the full content of a norm at two commits side by side, so callers
+// can render their own comparison. For a line-level diff use /diff instead.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { searchParams } = new URL(request.url);
@@ -18,13 +20,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const gitService = createGitService();
 
-    const diff = await gitService.getDiff(id, from, to);
+    const [fromVersion, toVersion] = await Promise.all([
+      gitService.getContentAtCommit(id, from),
+      gitService.getContentAtCommit(id, to),
+    ]);
 
     return NextResponse.json({
-      data: diff,
+      data: {
+        identificador: id,
+        from: fromVersion,
+        to: toVersion,
+      },
     });
   } catch (error) {
-    console.error("Error fetching diff:", error);
-    return NextResponse.json({ error: "Error al obtener las diferencias" }, { status: 500 });
+    console.error("Error comparing versions:", error);
+    return NextResponse.json({ error: "Error al comparar las versiones" }, { status: 500 });
   }
 }
