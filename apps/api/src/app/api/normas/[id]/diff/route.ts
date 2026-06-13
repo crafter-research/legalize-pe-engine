@@ -1,3 +1,4 @@
+import { gitErrorResponse } from "@/lib/git-errors";
 import { createGitService } from "@legalize-pe/git-reader";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -24,7 +25,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       data: diff,
     });
   } catch (error) {
-    console.error("Error fetching diff:", error);
-    return NextResponse.json({ error: "Error al obtener las diferencias" }, { status: 500 });
+    return gitErrorResponse(error, "Error al obtener las diferencias");
   }
 }

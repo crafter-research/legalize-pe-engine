@@ -2,7 +2,7 @@ import { GitService } from "./git-service";
 import { GitHubService } from "./github-service";
 
 export { GitService } from "./git-service";
-export { GitHubService } from "./github-service";
+export { GitHubService, GitHubApiError } from "./github-service";
 export type {
   CommitInfo,
   FileVersion,

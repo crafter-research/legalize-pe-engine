@@ -1,3 +1,4 @@
+import { gitErrorResponse } from "@/lib/git-errors";
 import { createGitService } from "@legalize-pe/git-reader";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -33,7 +34,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     });
   } catch (error) {
-    console.error("Error comparing versions:", error);
-    return NextResponse.json({ error: "Error al comparar las versiones" }, { status: 500 });
+    return gitErrorResponse(error, "Error al comparar las versiones");
   }
 }
