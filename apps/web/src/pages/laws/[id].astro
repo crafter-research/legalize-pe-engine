@@ -1,6 +1,6 @@
 ---
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Layout from "@/layouts/Layout.astro";
 import { jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
@@ -143,9 +143,9 @@ const readMinutes = Math.max(1, Math.round(wordCount / 220));
   <div class="mx-auto max-w-6xl px-4 sm:px-6 py-6 lg:py-10">
     <!-- Breadcrumb -->
     <nav class="mb-6 flex items-center gap-1.5 text-xs text-muted-foreground" aria-label="Breadcrumb">
-      <a href="/" class="hover:text-foreground transition-colors">Home</a>
+      <a href="/" class="rounded-sm hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Home</a>
       <span aria-hidden>/</span>
-      <a href="/laws" class="hover:text-foreground transition-colors">Laws</a>
+      <a href="/laws" class="rounded-sm hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Laws</a>
       <span aria-hidden>/</span>
       <span class="font-id text-foreground">{meta.identifier}</span>
     </nav>
@@ -208,6 +208,7 @@ const readMinutes = Math.max(1, Math.round(wordCount / 220));
           class="prose-norm text-[15px] leading-[1.75] text-foreground/90 max-w-3xl
             [&>*:first-child]:mt-0
             [&_h1]:hidden
+            [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24 [&_h4]:scroll-mt-24
             [&_h2]:font-semibold [&_h2]:text-xl [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:text-foreground
             [&_h3]:font-semibold [&_h3]:text-base [&_h3]:tracking-tight [&_h3]:mt-7 [&_h3]:mb-2 [&_h3]:text-foreground
             [&_h4]:font-semibold [&_h4]:text-sm [&_h4]:uppercase [&_h4]:tracking-wider [&_h4]:mt-6 [&_h4]:mb-1.5 [&_h4]:text-muted-foreground
@@ -271,20 +272,26 @@ const readMinutes = Math.max(1, Math.round(wordCount / 220));
 
         <div class="flex flex-col gap-2">
           {meta.source && (
-            <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-              <a href={meta.source} target="_blank" rel="noopener" class="flex items-center gap-2 w-full">
-                <ExternalLinkIcon className="size-3.5" />
-                <span>Original source</span>
-              </a>
-            </Button>
+            <a
+              href={meta.source}
+              target="_blank"
+              rel="noopener"
+              class={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start gap-2" })}
+            >
+              <ExternalLinkIcon className="size-3.5" />
+              <span data-i18n="law.originalSource">Original source</span>
+            </a>
           )}
           {meta.pdf_url && (
-            <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-              <a href={meta.pdf_url} target="_blank" rel="noopener" class="flex items-center gap-2 w-full">
-                <FileTextIcon className="size-3.5" />
-                <span>Original PDF</span>
-              </a>
-            </Button>
+            <a
+              href={meta.pdf_url}
+              target="_blank"
+              rel="noopener"
+              class={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start gap-2" })}
+            >
+              <FileTextIcon className="size-3.5" />
+              <span data-i18n="law.originalPdf">Original PDF</span>
+            </a>
           )}
         </div>
 

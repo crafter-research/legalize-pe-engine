@@ -66,10 +66,10 @@ export const translations: Record<string, Entry> = {
 
   // ---- Command palette ----
   "cmd.searchPlaceholder": {
-    en: "Search laws, regions, sections...",
-    es: "Buscar leyes, regiones, secciones...",
+    en: "Search laws, regions, sections…",
+    es: "Buscar leyes, regiones, secciones…",
   },
-  "cmd.triggerPlaceholder": { en: "Search laws, regions...", es: "Buscar leyes, regiones..." },
+  "cmd.triggerPlaceholder": { en: "Search laws, regions…", es: "Buscar leyes, regiones…" },
   "cmd.title": { en: "Search", es: "Buscar" },
   "cmd.description": {
     en: "Find a law, jump to a section, or run a command.",
