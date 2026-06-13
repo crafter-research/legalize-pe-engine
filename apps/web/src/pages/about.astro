@@ -1,5 +1,5 @@
 ---
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import Layout from "@/layouts/Layout.astro";
 import { ArrowRightIcon, GitForkIcon } from "lucide-react";
 ---
@@ -62,14 +62,15 @@ import { ArrowRightIcon, GitForkIcon } from "lucide-react";
       </div>
 
       <div class="mt-10 flex flex-wrap gap-3">
-        <Button size="lg" className="gap-2">
-          <a href="/laws" class="flex items-center gap-2"><span data-i18n="home.browseLaws">Browse laws</span> <ArrowRightIcon className="size-4" /></a>
-        </Button>
-        <Button variant="outline" size="lg" className="gap-2">
-          <a href="https://github.com/crafter-research/legalize-pe" class="flex items-center gap-2">
-            <GitForkIcon className="size-4" /> <span data-i18n="about.github">GitHub</span>
-          </a>
-        </Button>
+        <a href="/laws" class={buttonVariants({ size: "lg", className: "group gap-2" })}>
+          <span data-i18n="home.browseLaws">Browse laws</span> <ArrowRightIcon className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+        </a>
+        <a
+          href="https://github.com/crafter-research/legalize-pe"
+          class={buttonVariants({ variant: "outline", size: "lg", className: "gap-2" })}
+        >
+          <GitForkIcon className="size-4" /> <span data-i18n="about.github">GitHub</span>
+        </a>
       </div>
     </div>
   </section>

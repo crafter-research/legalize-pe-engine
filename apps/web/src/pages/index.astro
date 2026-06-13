@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import Layout from "@/layouts/Layout.astro";
 import {
   collectAllNormFiles,
@@ -138,7 +138,7 @@ const features = [
           <span class="size-1.5 rounded-full bg-status-in-force"></span>
           <span data-i18n="home.badge">Pre-1.0 · Community-maintained</span>
         </Badge>
-        <h1 class="text-5xl md:text-7xl tracking-tighter leading-[0.95]" data-i18n="home.hero">
+        <h1 class="text-5xl md:text-7xl tracking-tighter leading-[0.95] text-balance" data-i18n="home.hero">
           Peruvian law,<br />
           <span class="text-primary">as a git repo.</span>
         </h1>
@@ -147,16 +147,15 @@ const features = [
           with the real publication date. Clone it, grep it, diff it, build on it.</span>
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
-          <Button size="lg" className="gap-2">
-            <a href="/laws" class="flex items-center gap-2">
-              <span data-i18n="home.browseLaws">Browse laws</span> <ArrowRightIcon className="size-4" />
-            </a>
-          </Button>
-          <Button variant="outline" size="lg" className="gap-2">
-            <a href="https://github.com/crafter-research/legalize-pe" class="flex items-center gap-2">
-              <GitForkIcon className="size-4" /> <span data-i18n="home.cloneGithub">Clone on GitHub</span>
-            </a>
-          </Button>
+          <a href="/laws" class={buttonVariants({ size: "lg", className: "group gap-2" })}>
+            <span data-i18n="home.browseLaws">Browse laws</span> <ArrowRightIcon className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </a>
+          <a
+            href="https://github.com/crafter-research/legalize-pe"
+            class={buttonVariants({ variant: "outline", size: "lg", className: "gap-2" })}
+          >
+            <GitForkIcon className="size-4" /> <span data-i18n="home.cloneGithub">Clone on GitHub</span>
+          </a>
         </div>
       </div>
     </div>
@@ -180,7 +179,7 @@ const features = [
     <div class="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24">
       <div class="max-w-2xl mb-12">
         <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="home.whatYouGet">What you get</p>
-        <h2 class="text-3xl md:text-5xl tracking-tight leading-tight" data-i18n="home.whatYouGetTitle">
+        <h2 class="text-3xl md:text-5xl tracking-tight leading-tight text-balance" data-i18n="home.whatYouGetTitle">
           Legal infrastructure that&apos;s actually <em class="italic text-primary">accessible.</em>
         </h2>
       </div>
@@ -203,10 +202,10 @@ const features = [
         <div class="flex items-end justify-between mb-8">
           <div>
             <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="home.recent">Recent</p>
-            <h2 class="text-3xl md:text-4xl tracking-tight" data-i18n="home.recentTitle">Latest norms in the corpus</h2>
+            <h2 class="text-3xl md:text-4xl tracking-tight text-balance" data-i18n="home.recentTitle">Latest norms in the corpus</h2>
           </div>
-          <a href="/laws" class="hidden md:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <span data-i18n="home.allLaws">All laws</span> <ArrowRightIcon className="size-3.5" />
+          <a href="/laws" class="group hidden md:inline-flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <span data-i18n="home.allLaws">All laws</span> <ArrowRightIcon className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
           </a>
         </div>
 
@@ -215,7 +214,7 @@ const features = [
             <li>
               <a
                 href={`/laws/${n.id}`}
-                class="flex items-start gap-4 px-5 py-4 hover:bg-accent/50 transition-colors group"
+                class="group flex items-start gap-4 px-5 py-4 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               >
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1 flex-wrap">
@@ -227,9 +226,12 @@ const features = [
                   </div>
                   <p class="text-sm leading-snug group-hover:text-foreground">{n.title.replace(/\.{2,}$/, "…")}</p>
                 </div>
-                <time datetime={n.publication_date} class="text-xs text-muted-foreground font-id shrink-0">
-                  {n.publication_date}
-                </time>
+                <div class="flex items-center gap-2 shrink-0">
+                  <time datetime={n.publication_date} class="text-xs text-muted-foreground font-id">
+                    {n.publication_date}
+                  </time>
+                  <ArrowRightIcon className="size-4 text-muted-foreground -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+                </div>
               </a>
             </li>
           ))}
@@ -243,7 +245,7 @@ const features = [
       <div class="grid md:grid-cols-2 gap-12 items-start">
         <div>
           <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="home.federation">Federation</p>
-          <h2 class="text-3xl md:text-5xl tracking-tight leading-tight" data-i18n="home.federationTitle">
+          <h2 class="text-3xl md:text-5xl tracking-tight leading-tight text-balance" data-i18n="home.federationTitle">
             Part of <em class="italic">legalize.dev</em>
           </h2>
           <p class="mt-4 text-muted-foreground leading-relaxed" data-i18n="home.federationBody">
@@ -251,16 +253,12 @@ const features = [
             Italy, Korea, and 30+ other countries. Community-maintained by Crafter Research.
           </p>
           <div class="mt-6 flex flex-wrap gap-3">
-            <Button variant="outline" size="sm">
-              <a href="https://legalize.dev">legalize.dev →</a>
-            </Button>
-            <Button variant="ghost" size="sm">
-              <a href="/about" data-i18n="home.whyExists">Why this exists</a>
-            </Button>
+            <a href="https://legalize.dev" class={buttonVariants({ variant: "outline", size: "sm" })}>legalize.dev →</a>
+            <a href="/about" data-i18n="home.whyExists" class={buttonVariants({ variant: "ghost", size: "sm" })}>Why this exists</a>
           </div>
         </div>
 
-        <div class="bg-card border border-border/60 rounded-xl p-6 font-id text-xs leading-relaxed overflow-x-auto">
+        <div translate="no" class="bg-card border border-border/60 rounded-xl p-6 font-id text-xs leading-relaxed overflow-x-auto">
           <p class="text-muted-foreground mb-3" data-i18n="home.apiComment"># Clone, grep, diff. That&apos;s the API.</p>
           <p><span class="text-muted-foreground">$</span> git clone https://github.com/crafter-research/legalize-pe</p>
           <p><span class="text-muted-foreground">$</span> grep -A 20 "Artículo 191" pe/CON-1993.md</p>

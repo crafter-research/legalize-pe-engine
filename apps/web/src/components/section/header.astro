@@ -18,7 +18,7 @@ const pathname = Astro.url.pathname;
   <div class="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
     <a
       href="/"
-      class="flex items-center gap-2 shrink-0 transition-opacity hover:opacity-80"
+      class="flex items-center gap-2 shrink-0 rounded-md transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label="Legalize PE home"
     >
       <span
@@ -39,7 +39,7 @@ const pathname = Astro.url.pathname;
             href={href}
             data-i18n={key}
             class:list={[
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               active
                 ? "bg-accent text-accent-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent/60",

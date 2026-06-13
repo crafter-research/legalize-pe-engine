@@ -16,7 +16,7 @@ import {
   normUniqueId,
   parseFrontmatter,
 } from "@/lib/laws";
-import { FilterIcon, SearchIcon } from "lucide-react";
+import { ArrowRightIcon, FilterIcon, SearchIcon } from "lucide-react";
 
 type Norm = {
   identifier: string;
@@ -92,9 +92,9 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
       <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
           <p class="text-sm font-medium text-primary uppercase tracking-widest mb-3" data-i18n="laws.kicker">Corpus</p>
-          <h1 class="text-4xl md:text-6xl tracking-tight leading-none" data-i18n="laws.title">All laws</h1>
+          <h1 class="text-4xl md:text-6xl tracking-tight leading-none text-balance" data-i18n="laws.title">All laws</h1>
           <p class="mt-3 text-muted-foreground">
-            {total.toLocaleString()} <span data-i18n="laws.norms">norms.</span> <span data-i18n="cmd.title">Search</span> <kbd class="inline-flex items-center px-1.5 py-0.5 text-xs rounded bg-muted border border-border font-id">⌘ K</kbd> <span data-i18n="laws.useSearch">to search by title or ID.</span>
+            {total.toLocaleString()} <span data-i18n="laws.norms">norms.</span> <span data-i18n="cmd.title">Search</span> <kbd class="inline-flex items-center px-1.5 py-0.5 text-xs rounded bg-muted border border-border font-id">⌘&nbsp;K</kbd> <span data-i18n="laws.useSearch">to search by title or ID.</span>
           </p>
         </div>
         <div class="flex items-center gap-2 text-xs text-muted-foreground">
@@ -129,7 +129,7 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
                 <li>
                   <a
                     href={`/laws/${n.id}`}
-                    class="flex items-start gap-4 px-5 py-4 hover:bg-accent/50 transition-colors group"
+                    class="group flex items-start gap-4 px-5 py-4 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                   >
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -147,9 +147,12 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
                       </div>
                       <p class="text-sm leading-snug group-hover:text-foreground">{n.title.replace(/\.{2,}$/, "…")}</p>
                     </div>
-                    <time datetime={n.publication_date} class="text-xs text-muted-foreground font-id shrink-0 mt-1">
-                      {n.publication_date}
-                    </time>
+                    <div class="flex shrink-0 items-center gap-2 mt-1">
+                      <time datetime={n.publication_date} class="text-xs text-muted-foreground font-id">
+                        {n.publication_date}
+                      </time>
+                      <ArrowRightIcon className="size-4 text-muted-foreground -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+                    </div>
                   </a>
                 </li>
               );
@@ -159,7 +162,7 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
           {total > PAGE_SIZE && (
             <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
               <p><span data-i18n="laws.showing">Showing</span> {PAGE_SIZE} <span data-i18n="laws.of">of</span> {total.toLocaleString()} <span data-i18n="laws.norms">norms.</span></p>
-              <p><span data-i18n="cmd.title">Search</span> <kbd class="inline-flex items-center px-1.5 py-0.5 text-xs rounded bg-muted border border-border font-id">⌘ K</kbd> <span data-i18n="laws.useSearchRest">to search the rest.</span></p>
+              <p><span data-i18n="cmd.title">Search</span> <kbd class="inline-flex items-center px-1.5 py-0.5 text-xs rounded bg-muted border border-border font-id">⌘&nbsp;K</kbd> <span data-i18n="laws.useSearchRest">to search the rest.</span></p>
             </div>
           )}
         </>
