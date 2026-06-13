@@ -1,0 +1,53 @@
+---
+title: MCP + CLI
+description: Conecta tu agente al corpus, o úsalo desde la terminal.
+---
+
+El paquete [`@legalize-pe/agent`](https://github.com/crafter-research/legalize-pe-engine/tree/main/apps/agent)
+es un cliente liviano sobre la API hosted (sin clonar el corpus). Da un servidor
+MCP y un CLI que comparten el mismo core.
+
+## CLI
+
+```bash
+npx @legalize-pe/agent search "prescripción adquisitiva" --jurisdiction pe
+npx @legalize-pe/agent get pe/RM-0702-2026-IN
+npx @legalize-pe/agent ask "¿qué dice el Código Civil sobre la prescripción adquisitiva?"
+npx @legalize-pe/agent jurisdictions
+```
+
+Agrega `--json` para salida de máquina. `ask` requiere `AMICUS_API_KEY`.
+
+## MCP server
+
+Tools: `search_norms`, `get_norm`, `ask_legal` (grounded + cita),
+`list_jurisdictions`.
+
+### Claude Desktop / Cursor / Codex
+
+```json
+{
+  "mcpServers": {
+    "legalize-pe": {
+      "command": "npx",
+      "args": ["-y", "@legalize-pe/agent", "mcp"],
+      "env": { "AMICUS_API_KEY": "amicus_sk_..." }
+    }
+  }
+}
+```
+
+`search_norms` y `get_norm` funcionan sin key; `ask_legal` necesita
+`AMICUS_API_KEY`.
+
+## Hosted vs corpus local
+
+| | `@legalize-pe/agent` (hosted) | `@legalize-pe/mcp` (corpus) |
+| --- | --- | --- |
+| Búsqueda | Híbrida (semántica + FTS) | Keyword |
+| `ask` grounded | Sí | No |
+| Clona el corpus | No | Sí (~600MB) |
+| `get_norm_history` (git) | No | Sí |
+
+Usa el **hosted** para preguntar y buscar con calidad; el **corpus** para
+self-host y el historial git de cada reforma.
