@@ -6,9 +6,9 @@ import { JURISDICTIONS, ask, getNorm, searchNorms } from "./client.js";
 type ToolResult = { content: { type: "text"; text: string }[] };
 
 // Build + connect the MCP server over stdio. Reused by the `legalize-mcp` bin
-// and the `legalize mcp` subcommand.
+// and the `amicus mcp` subcommand.
 export async function startMcp(): Promise<void> {
-  const server = new McpServer({ name: "legalize-pe", version: "0.1.0" });
+  const server = new McpServer({ name: "amicus", version: "0.1.0" });
 
   // The SDK's registerTool generics + zod raw shapes trip TS2589 ("type
   // instantiation excessively deep"); the runtime is correct. Register through

@@ -1,11 +1,11 @@
 {
-  "name": "@legalize-pe/agent",
+  "name": "@crafter/amicus",
   "version": "0.1.0",
   "description": "Agent-first MCP server + CLI for Peruvian law: search, fetch, and ask grounded/cited questions over the legalize-pe corpus (via amicus).",
   "type": "module",
   "bin": {
-    "legalize": "dist/cli.js",
-    "legalize-mcp": "dist/mcp.js"
+    "amicus": "dist/cli.js",
+    "amicus-mcp": "dist/mcp.js"
   },
   "files": ["dist", "README.md"],
   "engines": { "node": ">=18" },

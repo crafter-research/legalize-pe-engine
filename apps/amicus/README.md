@@ -1,4 +1,4 @@
-# @crafter/legalize
+# @crafter/amicus
 
 Agent-first **MCP server + CLI** for Peruvian law. Search the open `legalize-pe`
 corpus (21k+ norms, national + 26 regional jurisdictions), fetch full texts, and
@@ -11,10 +11,10 @@ This is the lightweight, hosted client: no 600MB corpus clone, hybrid
 ## CLI
 
 ```bash
-npx @crafter/legalize search "prescripción adquisitiva" --jurisdiction pe
-npx @crafter/legalize get pe/RM-0702-2026-IN
-npx @crafter/legalize ask "¿puedo quedarme con un terreno si lo ocupo varios años?"
-npx @crafter/legalize jurisdictions
+npx @crafter/amicus search "prescripción adquisitiva" --jurisdiction pe
+npx @crafter/amicus get pe/RM-0702-2026-IN
+npx @crafter/amicus ask "¿puedo quedarme con un terreno si lo ocupo varios años?"
+npx @crafter/amicus jurisdictions
 ```
 
 Add `--json` to any command for machine output.
@@ -31,16 +31,16 @@ Tools: `search_norms`, `get_norm`, `ask_legal` (grounded + cited),
   "mcpServers": {
     "legalize-pe": {
       "command": "npx",
-      "args": ["-y", "@crafter/legalize", "mcp"],
+      "args": ["-y", "@crafter/amicus", "mcp"],
       "env": { "AMICUS_API_KEY": "amicus_sk_..." }
     }
   }
 }
 ```
 
-(The MCP binary is `legalize-mcp`; the example uses the `mcp` subcommand form if
+(The MCP binary is `amicus-mcp`; the example uses the `mcp` subcommand form if
 your client runs the package directly. You can also point `command` at
-`legalize-mcp`.)
+`amicus-mcp`.)
 
 ## Auth
 

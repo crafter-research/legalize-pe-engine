@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 import { JURISDICTIONS, ask, getNorm, searchNorms } from "./client.js";
 
-const HELP = `legalize — agent-first CLI for Peruvian law (corpus legalize-pe via amicus)
+const HELP = `amicus - agent-first CLI for Peruvian law (corpus legalize-pe via amicus)
 
 Usage:
-  legalize search <query> [--jurisdiction <code>] [--rank <type>] [--page N] [--json]
-  legalize get <id> [--json]
-  legalize ask <question...> [--json]
-  legalize jurisdictions [--json]
-  legalize mcp                              # run the MCP server (stdio)
+  amicus search <query> [--jurisdiction <code>] [--rank <type>] [--page N] [--json]
+  amicus get <id> [--json]
+  amicus ask <question...> [--json]
+  amicus jurisdictions [--json]
+  amicus mcp                              # run the MCP server (stdio)
 
 Examples:
-  legalize search "prescripción adquisitiva" --jurisdiction pe
-  legalize get pe/RM-0702-2026-IN
-  legalize ask "¿puedo quedarme con un terreno si lo ocupo varios años?"
+  amicus search "prescripción adquisitiva" --jurisdiction pe
+  amicus get pe/RM-0702-2026-IN
+  amicus ask "¿puedo quedarme con un terreno si lo ocupo varios años?"
 
 Env:
   AMICUS_API_URL   default https://amicus.crafter.ing
