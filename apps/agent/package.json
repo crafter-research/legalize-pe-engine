@@ -1,0 +1,28 @@
+{
+  "name": "@legalize-pe/agent",
+  "version": "0.1.0",
+  "description": "Agent-first MCP server + CLI for Peruvian law: search, fetch, and ask grounded/cited questions over the legalize-pe corpus (via amicus).",
+  "type": "module",
+  "bin": {
+    "legalize": "dist/cli.js",
+    "legalize-mcp": "dist/mcp.js"
+  },
+  "files": ["dist", "README.md"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsc",
+    "dev": "bun src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc"
+  },
+  "keywords": ["mcp", "cli", "peru", "legal", "law", "legalize-pe", "amicus", "agent"],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
+}
