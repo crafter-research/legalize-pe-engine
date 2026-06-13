@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import vercel from "@astrojs/vercel";
@@ -11,6 +12,13 @@ export default defineConfig({
   adapter: vercel({ imageService: "passthrough", isr: { expiration: 86400 } }),
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        // Resolves the bare `id-path-map` specifier to the build-generated JSON.
+        // tsc/astro check type-check it via the ambient module in env.d.ts.
+        "id-path-map": fileURLToPath(new URL("./public/id-path-map.json", import.meta.url)),
+      },
+    },
   },
   integrations: [
     react(),
