@@ -7,6 +7,8 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/use-lang";
 import Fuse from "fuse.js";
 import {
   ArrowRightIcon,
@@ -31,26 +33,6 @@ type Hit = {
   b: string; // body preview
 };
 
-const RANK_LABELS: Record<string, string> = {
-  constitucion: "Constitution",
-  ley: "Law",
-  decreto_legislativo: "Legislative Decree",
-  decreto_supremo: "Supreme Decree",
-  decreto_de_urgencia: "Urgency Decree",
-  decreto_urgencia: "Urgency Decree",
-  decreto_ley: "Decree Law",
-  resolucion_legislativa: "Legislative Resolution",
-  resolucion_ministerial: "Ministerial Resolution",
-  resolucion_suprema: "Supreme Resolution",
-  ley_de_reforma_constitucional: "Constitutional Reform",
-  ordenanza_regional: "Regional Ordinance",
-  ordenanza_municipal: "Municipal Ordinance",
-  decreto_regional: "Regional Decree",
-  acuerdo_regional: "Regional Agreement",
-  acuerdo_de_concejo: "Council Agreement",
-  decreto_de_alcaldia: "Mayoral Decree",
-};
-
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -59,6 +41,11 @@ interface Props {
 export function CommandPalette({ open, onOpenChange }: Props) {
   const [index, setIndex] = useState<Hit[] | null>(null);
   const [query, setQuery] = useState("");
+  const lang = useLang();
+  const rankLabel = (r: string) => {
+    const label = t(`rank.${r}`, lang);
+    return label === `rank.${r}` ? r : label;
+  };
 
   useEffect(() => {
     if (!open || index) return;
@@ -97,55 +84,57 @@ export function CommandPalette({ open, onOpenChange }: Props) {
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Search"
-      description="Find a law, jump to a section, or run a command."
+      title={t("cmd.title", lang)}
+      description={t("cmd.description", lang)}
     >
       <CommandInput
         value={query}
         onValueChange={setQuery}
-        placeholder="Search laws, regions, sections..."
+        placeholder={t("cmd.searchPlaceholder", lang)}
       />
       <CommandList>
         <CommandEmpty>
           {query.trim()
-            ? "No matches. Try the law number or title."
+            ? t("cmd.emptyNoMatch", lang)
             : !index
-              ? "Loading index..."
-              : "Start typing to search."}
+              ? t("cmd.emptyLoading", lang)
+              : t("cmd.emptyStart", lang)}
         </CommandEmpty>
 
         {!query.trim() && (
           <>
-            <CommandGroup heading="Navigate">
+            <CommandGroup heading={t("cmd.navigate", lang)}>
               <CommandItem onSelect={() => go("/")}>
                 <HomeIcon />
-                Home
+                {t("nav.home", lang)}
               </CommandItem>
               <CommandItem onSelect={() => go("/laws")}>
                 <BookOpenIcon />
-                Browse laws
+                {t("cmd.browseLaws", lang)}
               </CommandItem>
               <CommandItem onSelect={() => go("/regions")}>
                 <MapIcon />
-                Regional jurisdictions
+                {t("cmd.regions", lang)}
               </CommandItem>
               <CommandItem onSelect={() => go("/audit")}>
                 <LayersIcon />
-                Coverage audit
+                {t("cmd.audit", lang)}
               </CommandItem>
               <CommandItem onSelect={() => go("/api")}>
                 <Settings2Icon />
-                API documentation
+                {t("cmd.apiDocs", lang)}
               </CommandItem>
             </CommandGroup>
 
             <CommandSeparator />
 
-            <CommandGroup heading="Key documents">
+            <CommandGroup heading={t("cmd.keyDocs", lang)}>
               <CommandItem onSelect={() => go("/laws/pe-con-1993")}>
                 <LandmarkIcon />
                 Constitución Política del Perú (1993)
-                <span className="text-muted-foreground ml-auto text-xs">32 versions</span>
+                <span className="text-muted-foreground ml-auto text-xs">
+                  32 {t("cmd.versions", lang)}
+                </span>
               </CommandItem>
               <CommandItem onSelect={() => go("/laws/pe-dleg-295-1984")}>
                 <GavelIcon />
@@ -160,7 +149,11 @@ export function CommandPalette({ open, onOpenChange }: Props) {
         )}
 
         {results.length > 0 && (
-          <CommandGroup heading={`${results.length} match${results.length === 1 ? "" : "es"}`}>
+          <CommandGroup
+            heading={`${results.length} ${
+              results.length === 1 ? t("cmd.matchOne", lang) : t("cmd.matchMany", lang)
+            }`}
+          >
             {results.map((h) => (
               <CommandItem key={h.id} value={`${h.id} ${h.t}`} onSelect={() => go(lawUrl(h))}>
                 <FileTextIcon />
@@ -169,7 +162,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
                   <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                     <span className="font-id">{h.id}</span>
                     <span aria-hidden>·</span>
-                    <span>{RANK_LABELS[h.r] ?? h.r}</span>
+                    <span>{rankLabel(h.r)}</span>
                     <span aria-hidden>·</span>
                     <span>{h.f.slice(0, 4)}</span>
                   </span>

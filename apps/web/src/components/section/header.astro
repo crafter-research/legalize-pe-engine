@@ -1,13 +1,14 @@
 ---
 import { CommandPaletteTrigger } from "@/components/island/command-palette-trigger";
+import { LanguageToggle } from "@/components/island/language-toggle";
 import { ThemeToggle } from "@/components/island/theme-toggle";
 
 const navItems = [
-  { href: "/laws", label: "Laws" },
-  { href: "/regions", label: "Regions" },
-  { href: "/audit", label: "Audit" },
-  { href: "/api", label: "API" },
-  { href: "/about", label: "About" },
+  { href: "/laws", label: "Laws", key: "nav.laws" },
+  { href: "/regions", label: "Regions", key: "nav.regions" },
+  { href: "/audit", label: "Audit", key: "nav.audit" },
+  { href: "/api", label: "API", key: "nav.api" },
+  { href: "/about", label: "About", key: "nav.about" },
 ];
 
 const pathname = Astro.url.pathname;
@@ -31,11 +32,12 @@ const pathname = Astro.url.pathname;
     </a>
 
     <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
-      {navItems.map(({ href, label }) => {
+      {navItems.map(({ href, label, key }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <a
             href={href}
+            data-i18n={key}
             class:list={[
               "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               active
@@ -54,6 +56,7 @@ const pathname = Astro.url.pathname;
 
     <div class="flex items-center gap-1">
       <CommandPaletteTrigger client:load />
+      <LanguageToggle client:load />
       <ThemeToggle client:load />
     </div>
   </div>

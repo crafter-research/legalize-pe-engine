@@ -54,9 +54,9 @@ const name = jurisdictionLabels[iso ?? ""] ?? iso;
 <Layout title={`${name} · Legalize PE`} description={`${norms.length} norms from ${name}`}>
   <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 lg:py-12">
     <nav class="mb-8 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
-      <a href="/" class="hover:text-foreground transition-colors">Home</a>
+      <a href="/" class="hover:text-foreground transition-colors" data-i18n="nav.home">Home</a>
       <span aria-hidden>/</span>
-      <a href="/regions" class="hover:text-foreground transition-colors">Regions</a>
+      <a href="/regions" class="hover:text-foreground transition-colors" data-i18n="nav.regions">Regions</a>
       <span aria-hidden>/</span>
       <span class="text-foreground">{name}</span>
     </nav>
@@ -64,13 +64,13 @@ const name = jurisdictionLabels[iso ?? ""] ?? iso;
     <header class="mb-10 pb-8 border-b border-border/60">
       <div class="flex items-center gap-2 mb-3">
         <Badge variant="outline" className="font-id">{iso}</Badge>
-        <span class="text-xs text-muted-foreground">{norms.length} {norms.length === 1 ? "norm" : "norms"}</span>
+        <span class="text-xs text-muted-foreground">{norms.length} <span data-i18n={norms.length === 1 ? "region.normOne" : "region.normMany"}>{norms.length === 1 ? "norm" : "norms"}</span></span>
       </div>
       <h1 class="text-4xl md:text-6xl tracking-tight leading-none">{name}</h1>
     </header>
 
     {norms.length === 0 ? (
-      <p class="text-muted-foreground">No norms yet. Coming in V2.</p>
+      <p class="text-muted-foreground" data-i18n="region.empty">No norms yet. Coming in V2.</p>
     ) : (
       <ul class="divide-y divide-border/60 border border-border/60 rounded-xl overflow-hidden bg-card">
         {norms.map((n) => (
