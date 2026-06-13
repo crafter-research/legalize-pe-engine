@@ -19,7 +19,18 @@ interface GitHubCommit {
 
 export class GitHubService {
   private getFilePath(identificador: string): string {
-    return `leyes/pe/${identificador}.md`;
+    return `pe/${identificador}.md`;
+  }
+
+  private headers(): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "legalize-pe",
+    };
+    // Optional token raises the GitHub API rate limit from 60 to 5,000 req/h.
+    const token = process.env.GITHUB_TOKEN;
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
   }
 
   async hasHistory(identificador: string): Promise<boolean> {
@@ -40,10 +51,7 @@ export class GitHubService {
     const url = `${GITHUB_API}/repos/${GITHUB_REPO}/commits?path=${encodeURIComponent(filePath)}&per_page=100`;
 
     const res = await fetch(url, {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "legalize-pe",
-      },
+      headers: this.headers(),
     });
 
     if (!res.ok) {
@@ -74,10 +82,7 @@ export class GitHubService {
 
     const contentUrl = `${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodeURIComponent(filePath)}?ref=${commitHash}`;
     const contentRes = await fetch(contentUrl, {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "legalize-pe",
-      },
+      headers: this.headers(),
     });
 
     if (!contentRes.ok) {
@@ -92,10 +97,7 @@ export class GitHubService {
 
     const commitUrl = `${GITHUB_API}/repos/${GITHUB_REPO}/commits/${commitHash}`;
     const commitRes = await fetch(commitUrl, {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "legalize-pe",
-      },
+      headers: this.headers(),
     });
 
     let authorDate = "";
@@ -126,10 +128,7 @@ export class GitHubService {
 
     const compareUrl = `${GITHUB_API}/repos/${GITHUB_REPO}/compare/${fromHash}...${toHash}`;
     const compareRes = await fetch(compareUrl, {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "legalize-pe",
-      },
+      headers: this.headers(),
     });
 
     if (!compareRes.ok) {

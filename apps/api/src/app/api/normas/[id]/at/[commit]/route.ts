@@ -1,5 +1,4 @@
-import path from "node:path";
-import { GitService } from "@legalize-pe/git-reader";
+import { createGitService } from "@legalize-pe/git-reader";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -9,9 +8,7 @@ export async function GET(
   const { id, commit } = await params;
 
   try {
-    // Go up from apps/api to monorepo root
-    const repoPath = path.join(process.cwd(), "..", "..");
-    const gitService = new GitService(repoPath);
+    const gitService = createGitService();
 
     const version = await gitService.getContentAtCommit(id, commit);
 

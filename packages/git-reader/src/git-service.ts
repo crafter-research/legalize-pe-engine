@@ -21,7 +21,7 @@ export class GitService {
   }
 
   private getFilePath(identificador: string): string {
-    return `leyes/pe/${identificador}.md`;
+    return `pe/${identificador}.md`;
   }
 
   async hasHistory(identificador: string): Promise<boolean> {

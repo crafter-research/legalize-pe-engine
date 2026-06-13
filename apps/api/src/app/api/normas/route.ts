@@ -5,10 +5,10 @@ import { type NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
-  // Query parameters
+  // Query parameters (accept singular and plural aliases so callers can guess either)
   const q = searchParams.get("q");
-  const tipo = searchParams.get("tipo");
-  const jurisdiccion = searchParams.get("jurisdiccion");
+  const tipo = searchParams.get("tipo") ?? searchParams.get("tipos");
+  const jurisdiccion = searchParams.get("jurisdiccion") ?? searchParams.get("jurisdicciones");
   const estado = searchParams.get("estado");
   const desde = searchParams.get("desde");
   const hasta = searchParams.get("hasta");
@@ -50,6 +50,15 @@ export async function GET(request: NextRequest) {
     // Execute query
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    // When searching, surface title matches above norms that only mention the
+    // term in their body; otherwise newest first.
+    const orderBy = q
+      ? [
+          sql`CASE WHEN ${schema.normas.titulo} LIKE ${`%${q}%`} THEN 0 ELSE 1 END`,
+          desc(schema.normas.fechaPublicacion),
+        ]
+      : [desc(schema.normas.fechaPublicacion)];
+
     const [normas, countResult] = await Promise.all([
       db
         .select({
@@ -63,7 +72,7 @@ export async function GET(request: NextRequest) {
         })
         .from(schema.normas)
         .where(whereClause)
-        .orderBy(desc(schema.normas.fechaPublicacion))
+        .orderBy(...orderBy)
         .limit(limit)
         .offset(offset),
       db.select({ count: sql<number>`count(*)` }).from(schema.normas).where(whereClause),

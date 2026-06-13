@@ -1,14 +1,11 @@
-import path from "node:path";
-import { GitService } from "@legalize-pe/git-reader";
+import { createGitService } from "@legalize-pe/git-reader";
 import { type NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   try {
-    // Go up from apps/api to monorepo root
-    const repoPath = path.join(process.cwd(), "..", "..");
-    const gitService = new GitService(repoPath);
+    const gitService = createGitService();
 
     const commits = await gitService.getHistory(id);
 
