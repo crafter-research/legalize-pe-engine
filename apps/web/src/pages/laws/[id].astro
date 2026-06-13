@@ -6,7 +6,7 @@ import Layout from "@/layouts/Layout.astro";
 import { jurisdictionLabels, parseFrontmatter } from "@/lib/laws";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { formatDateLong } from "@/lib/utils";
-import idPathMap from "../../../public/id-path-map.json";
+import idPathMap from "id-path-map";
 import {
   CalendarIcon,
   ExternalLinkIcon,
@@ -29,14 +29,14 @@ const RAW_BASE = "https://raw.githubusercontent.com/crafter-research/legalize-pe
 // that fails inside the on-demand serverless function.
 function notFound(): Response {
   return new Response(
-    "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>404 — Not found</title><meta name=\"robots\" content=\"noindex\"></head><body style=\"font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem\"><h1>404</h1><p>No norm matches this identifier. <a href=\"/laws\">Browse all laws</a>.</p></body></html>",
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>404 — Not found</title><meta name="robots" content="noindex"></head><body style="font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem"><h1>404</h1><p>No norm matches this identifier. <a href="/laws">Browse all laws</a>.</p></body></html>',
     { status: 404, headers: { "content-type": "text/html; charset=utf-8" } },
   );
 }
 
 const { id } = Astro.params;
 const originalId = id ?? "";
-const relativePath = id ? (idPathMap as Record<string, string>)[id] : undefined;
+const relativePath = id ? idPathMap[id] : undefined;
 
 if (!relativePath) {
   return notFound();
