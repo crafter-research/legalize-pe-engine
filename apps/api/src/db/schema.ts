@@ -34,6 +34,9 @@ export const normas = sqliteTable(
     index("idx_estado").on(table.estado),
     index("idx_fecha_publicacion").on(table.fechaPublicacion),
     index("idx_spij_id").on(table.spijId),
+    // Used by /stats and /normas/actualizadas ordering; without it those do a
+    // full table scan that times out against remote Turso.
+    index("idx_ultima_actualizacion").on(table.ultimaActualizacion),
   ],
 );
 
