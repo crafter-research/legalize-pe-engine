@@ -56,13 +56,17 @@ function errorResponse(error: unknown): Response {
 }
 
 // GET /api/search/smart?q=...&page=&limit=  (cacheable, shareable URL)
-export const GET: APIRoute = ({ url }) => {
-  const query = url.searchParams.get("q") ?? "";
+// Read params from `request.url` rather than the `url` context prop: the latter
+// is undefined in the Vercel serverless adapter and crashes the function
+// (FUNCTION_INVOCATION_FAILED), even though it works in the Astro dev server.
+export const GET: APIRoute = async ({ request }) => {
+  const params = new URL(request.url).searchParams;
+  const query = params.get("q") ?? "";
   if (!query.trim()) {
     return json({ error: "Query parameter 'q' is required" }, 400);
   }
   try {
-    return json(runSearch(query, url.searchParams.get("page"), url.searchParams.get("limit")));
+    return json(runSearch(query, params.get("page"), params.get("limit")));
   } catch (error) {
     return errorResponse(error);
   }
