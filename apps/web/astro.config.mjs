@@ -17,6 +17,10 @@ export default defineConfig({
         // Resolves the bare `id-path-map` specifier to the build-generated JSON.
         // tsc/astro check type-check it via the ambient module in env.d.ts.
         "id-path-map": fileURLToPath(new URL("./public/id-path-map.json", import.meta.url)),
+        // Same pattern for the search index: importing it (instead of reading
+        // from disk at runtime) bundles it into the serverless function, where
+        // `public/` is not on the filesystem. See env.d.ts for the ambient type.
+        "search-index": fileURLToPath(new URL("./public/search-index.json", import.meta.url)),
       },
     },
   },

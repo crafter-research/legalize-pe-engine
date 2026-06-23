@@ -1,8 +1,7 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { ImageResponse } from "@vercel/og";
 import type { APIRoute } from "astro";
 import { createElement } from "react";
+import searchIndex from "search-index";
 
 /**
  * Dynamic Open Graph image generation endpoint
@@ -14,12 +13,6 @@ import { createElement } from "react";
  * Images are dynamically generated using @vercel/og and cached at the edge
  */
 export const prerender = false;
-
-interface SearchIndexItem {
-  id: string;
-  t: string;
-  r: string;
-}
 
 const rankLabels: Record<string, string> = {
   ley: "Ley",
@@ -36,20 +29,13 @@ export const GET: APIRoute = async ({ params }) => {
   let subtitle = "Legislación peruana como repositorio Git";
   let rango = "";
 
-  // If slug is provided, look up the law in the search index
+  // If slug is provided, look up the law in the (bundled) search index
   if (slug && slug !== "index") {
-    try {
-      const searchIndexPath = join(process.cwd(), "public/search-index.json");
-      const searchIndex: SearchIndexItem[] = JSON.parse(readFileSync(searchIndexPath, "utf-8"));
-
-      const law = searchIndex.find((item) => item.id === slug);
-      if (law) {
-        title = law.t;
-        rango = rankLabels[law.r] || law.r;
-        subtitle = "Legalize PE - Legislación Peruana";
-      }
-    } catch (error) {
-      console.error("Error loading search index for OG image:", error);
+    const law = searchIndex.find((item) => item.id === slug);
+    if (law) {
+      title = law.t;
+      rango = rankLabels[law.r] || law.r;
+      subtitle = "Legalize PE - Legislación Peruana";
     }
   }
 
