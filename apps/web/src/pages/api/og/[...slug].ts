@@ -2,6 +2,7 @@ import { ImageResponse } from "@vercel/og";
 import type { APIRoute } from "astro";
 import { createElement } from "react";
 import searchIndex from "search-index";
+import { rankLabels } from "../../../lib/laws";
 
 /**
  * Dynamic Open Graph image generation endpoint
@@ -13,14 +14,6 @@ import searchIndex from "search-index";
  * Images are dynamically generated using @vercel/og and cached at the edge
  */
 export const prerender = false;
-
-const rankLabels: Record<string, string> = {
-  ley: "Ley",
-  "decreto-legislativo": "Decreto Legislativo",
-  "decreto-supremo": "Decreto Supremo",
-  "resolucion-ministerial": "Resolución Ministerial",
-  "resolucion-suprema": "Resolución Suprema",
-};
 
 export const GET: APIRoute = async ({ params }) => {
   const slug = params.slug || "";

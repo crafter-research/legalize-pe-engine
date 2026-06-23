@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import searchIndex from "search-index";
-import type { CompactLey } from "../../../lib/search-index";
 import { intelligentSearch } from "../../../lib/smart-search";
 
 export const prerender = false;
@@ -8,7 +7,7 @@ export const prerender = false;
 // Bundled at build time via the `search-index` Vite alias (see astro.config.mjs).
 // Importing instead of reading from `public/` at runtime is what keeps this
 // endpoint alive in the Vercel serverless function, where `public/` is absent.
-const laws = searchIndex as CompactLey[];
+const laws = searchIndex;
 
 const json = (data: unknown, status = 200): Response =>
   new Response(JSON.stringify(data), {
