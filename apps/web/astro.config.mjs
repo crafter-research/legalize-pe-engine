@@ -9,7 +9,14 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
   site: "https://legalize-pe.crafter.ing",
   output: "static",
-  adapter: vercel({ imageService: "passthrough", isr: { expiration: 86400 } }),
+  adapter: vercel({
+    imageService: "passthrough",
+    // ISR caches static pages for a day, but it must NOT wrap the API routes:
+    // GET requests routed through the ISR function crash with
+    // FUNCTION_INVOCATION_FAILED (POST bypasses ISR and works). Excluding /api
+    // serves those routes from the normal serverless function on every request.
+    isr: { expiration: 86400, exclude: [/^\/api\/.*/] },
+  }),
   vite: {
     plugins: [tailwindcss()],
     resolve: {
