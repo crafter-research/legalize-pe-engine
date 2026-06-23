@@ -23,6 +23,16 @@ declare module "id-path-map" {
   export default map;
 }
 
+// Build-time generated search index (public/search-index.json, written by the
+// prebuild script). Imported as a module so the bundler inlines it into the
+// serverless function; `public/` is not on the function filesystem at runtime.
+// Vite resolves the real file via the `search-index` alias in astro.config.mjs.
+declare module "search-index" {
+  import type { CompactLey } from "./lib/search-index";
+  const laws: CompactLey[];
+  export default laws;
+}
+
 declare module "virtual:pwa-register" {
   export interface RegisterSWOptions {
     immediate?: boolean;
