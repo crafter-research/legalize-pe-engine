@@ -10,13 +10,21 @@ describe("buildNewIdentifier", () => {
 
   it("rewrites the rank prefix using RANK_TO_PREFIX", () => {
     expect(
-      buildNewIdentifier({ oldId: "dleg-295", rank: "decreto-legislativo", publicationDate: "1984-03-25" }),
+      buildNewIdentifier({
+        oldId: "dleg-295",
+        rank: "decreto-legislativo",
+        publicationDate: "1984-03-25",
+      }),
     ).toBe("DLEG-295-1984");
   });
 
   it("keeps an existing trailing year and does not double-append", () => {
     expect(
-      buildNewIdentifier({ oldId: "ds-033-2001-mtc", rank: "decreto-supremo", publicationDate: "2001-07-01" }),
+      buildNewIdentifier({
+        oldId: "ds-033-2001-mtc",
+        rank: "decreto-supremo",
+        publicationDate: "2001-07-01",
+      }),
     ).toBe("DS-033-2001-MTC");
   });
 
@@ -51,7 +59,11 @@ describe("buildNewIdentifier", () => {
   it("BUG CANDIDATE: a 4-digit number that is NOT a year is treated as a year", () => {
     // "ley-1234" -> rest "1234" matches /-\d{4}.../? No leading dash. Let's see real output.
     // Documents whatever it does so a regression is visible.
-    const out = buildNewIdentifier({ oldId: "ley-1234", rank: "ley", publicationDate: "2020-05-05" });
+    const out = buildNewIdentifier({
+      oldId: "ley-1234",
+      rank: "ley",
+      publicationDate: "2020-05-05",
+    });
     // rest = "1234"; restUpper test /-\d{4}(-[A-Z]+)?$/ requires a leading dash, so 1234 has none -> appends year
     expect(out).toBe("LEY-1234-2020");
   });
