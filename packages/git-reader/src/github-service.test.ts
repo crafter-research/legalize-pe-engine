@@ -22,7 +22,7 @@ describe("GitHubService path construction", () => {
     // Caller resolves id -> corpus-relative path via id-path-map.json.
     await svc.getHistory("pe-lal-093-2026-grll-cr", "pe-lal/093-2026-GRLL-CR.md");
 
-    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const calledUrl = fetchMock.mock.calls[0]?.[0] as string;
     expect(decodeURIComponent(calledUrl)).toContain("path=pe-lal/093-2026-GRLL-CR.md");
   });
 
@@ -33,7 +33,7 @@ describe("GitHubService path construction", () => {
     const svc = new GitHubService();
     await svc.getHistory("con-1993");
 
-    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const calledUrl = fetchMock.mock.calls[0]?.[0] as string;
     expect(decodeURIComponent(calledUrl)).toContain("path=pe/con-1993.md");
   });
 });
@@ -52,7 +52,7 @@ describe("GitHubService.getDiff patch parser (via shared diff-parser)", () => {
     const diff = await svc.getDiff("x", "aaaaaaa", "bbbbbbb");
 
     expect(diff.hunks).toHaveLength(1);
-    const types = diff.hunks[0].lines.map((l) => l.type);
+    const types = diff.hunks[0]?.lines.map((l) => l.type);
     expect(types).toEqual(["context", "del", "add", "context"]);
     expect(diff.stats).toEqual({ additions: 1, deletions: 1 });
   });
@@ -71,7 +71,7 @@ describe("GitHubService.getDiff patch parser (via shared diff-parser)", () => {
     const svc = new GitHubService();
     const diff = await svc.getDiff("blank", "aaaaaaa", "bbbbbbb");
     // After fix: only the " context" line and the "+added" line; "" is skipped.
-    expect(diff.hunks[0].lines.map((l) => l.type)).toEqual(["context", "add"]);
+    expect(diff.hunks[0]?.lines.map((l) => l.type)).toEqual(["context", "add"]);
   });
 
   it("'\\ No newline at end of file' is silently skipped (fix for #11b)", async () => {
@@ -85,7 +85,7 @@ describe("GitHubService.getDiff patch parser (via shared diff-parser)", () => {
     const svc = new GitHubService();
     const diff = await svc.getDiff("nonl", "aaaaaaa", "bbbbbbb");
     // The annotation line starts with "\" and is correctly skipped.
-    expect(diff.hunks[0].lines.map((l) => l.type)).toEqual(["del", "add"]);
+    expect(diff.hunks[0]?.lines.map((l) => l.type)).toEqual(["del", "add"]);
   });
 
   it("returns empty hunks when the target file is absent from the compare", async () => {
