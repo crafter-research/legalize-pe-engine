@@ -1,5 +1,6 @@
 import { type SimpleGit, simpleGit } from "simple-git";
 import { contentCache, diffCache, historyCache } from "./cache";
+import { parsePatch } from "./diff-parser";
 import type { CommitInfo, DiffHunk, DiffResult, FileVersion } from "./types";
 
 interface LogEntry {
@@ -20,13 +21,13 @@ export class GitService {
     this.git = simpleGit(repoPath);
   }
 
-  private getFilePath(identificador: string): string {
-    return `pe/${identificador}.md`;
+  private resolveFilePath(identificador: string, resolvedPath?: string): string {
+    return resolvedPath ?? `pe/${identificador}.md`;
   }
 
-  async hasHistory(identificador: string): Promise<boolean> {
+  async hasHistory(identificador: string, resolvedPath?: string): Promise<boolean> {
     try {
-      const filePath = this.getFilePath(identificador);
+      const filePath = this.resolveFilePath(identificador, resolvedPath);
       const log = await this.git.log({ file: filePath, maxCount: 1 });
       return log.total > 0;
     } catch {
@@ -34,12 +35,12 @@ export class GitService {
     }
   }
 
-  async getHistory(identificador: string): Promise<CommitInfo[]> {
+  async getHistory(identificador: string, resolvedPath?: string): Promise<CommitInfo[]> {
     const cacheKey = `history:${identificador}`;
     const cached = historyCache.get(cacheKey) as CommitInfo[] | undefined;
     if (cached) return cached;
 
-    const filePath = this.getFilePath(identificador);
+    const filePath = this.resolveFilePath(identificador, resolvedPath);
 
     const log = await this.git.log({
       file: filePath,
@@ -69,12 +70,16 @@ export class GitService {
     return commits;
   }
 
-  async getContentAtCommit(identificador: string, commitHash: string): Promise<FileVersion> {
+  async getContentAtCommit(
+    identificador: string,
+    commitHash: string,
+    resolvedPath?: string,
+  ): Promise<FileVersion> {
     const cacheKey = `content:${identificador}:${commitHash}`;
     const cached = contentCache.get(cacheKey) as FileVersion | undefined;
     if (cached) return cached;
 
-    const filePath = this.getFilePath(identificador);
+    const filePath = this.resolveFilePath(identificador, resolvedPath);
 
     const content = await this.git.show([`${commitHash}:${filePath}`]);
 
@@ -100,12 +105,17 @@ export class GitService {
     return result;
   }
 
-  async getDiff(identificador: string, fromHash: string, toHash: string): Promise<DiffResult> {
+  async getDiff(
+    identificador: string,
+    fromHash: string,
+    toHash: string,
+    resolvedPath?: string,
+  ): Promise<DiffResult> {
     const cacheKey = `diff:${identificador}:${fromHash}:${toHash}`;
     const cached = diffCache.get(cacheKey) as DiffResult | undefined;
     if (cached) return cached;
 
-    const filePath = this.getFilePath(identificador);
+    const filePath = this.resolveFilePath(identificador, resolvedPath);
 
     const diff = await this.git.diff([fromHash, toHash, "--", filePath]);
 
@@ -127,7 +137,7 @@ export class GitService {
     const fromCommit = fromLog.latest as unknown as { authorDate: string } | undefined;
     const toCommit = toLog.latest as unknown as { authorDate: string } | undefined;
 
-    const hunks = this.parseDiff(diff);
+    const hunks = parsePatch(diff);
     const stats = this.calculateStats(hunks);
 
     const result: DiffResult = {
@@ -141,65 +151,6 @@ export class GitService {
 
     diffCache.set(cacheKey, result);
     return result;
-  }
-
-  private parseDiff(diffOutput: string): DiffHunk[] {
-    const hunks: DiffHunk[] = [];
-    const lines = diffOutput.split("\n");
-
-    let currentHunk: DiffHunk | null = null;
-    let oldLine = 0;
-    let newLine = 0;
-
-    for (const line of lines) {
-      const hunkMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
-
-      if (hunkMatch) {
-        if (currentHunk) hunks.push(currentHunk);
-
-        const oldStart = hunkMatch[1];
-        const newStart = hunkMatch[3];
-        if (!oldStart || !newStart) continue;
-
-        oldLine = Number.parseInt(oldStart, 10);
-        newLine = Number.parseInt(newStart, 10);
-
-        currentHunk = {
-          oldStart: oldLine,
-          oldLines: Number.parseInt(hunkMatch[2] ?? "1", 10),
-          newStart: newLine,
-          newLines: Number.parseInt(hunkMatch[4] ?? "1", 10),
-          lines: [],
-        };
-        continue;
-      }
-
-      if (!currentHunk) continue;
-
-      if (line.startsWith("+") && !line.startsWith("+++")) {
-        currentHunk.lines.push({
-          type: "add",
-          content: line.slice(1),
-          newLine: newLine++,
-        });
-      } else if (line.startsWith("-") && !line.startsWith("---")) {
-        currentHunk.lines.push({
-          type: "del",
-          content: line.slice(1),
-          oldLine: oldLine++,
-        });
-      } else if (line.startsWith(" ")) {
-        currentHunk.lines.push({
-          type: "context",
-          content: line.slice(1),
-          oldLine: oldLine++,
-          newLine: newLine++,
-        });
-      }
-    }
-
-    if (currentHunk) hunks.push(currentHunk);
-    return hunks;
   }
 
   private calculateStats(hunks: DiffHunk[]): {
