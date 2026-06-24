@@ -90,6 +90,12 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
+  // `null`, arrays and primitives are valid JSON but not a request object;
+  // guard before destructuring so they return 400 instead of crashing.
+  if (body === null || typeof body !== "object") {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
+
   const { query, page = 1, limit = 20 } = body;
 
   if (!query || typeof query !== "string") {

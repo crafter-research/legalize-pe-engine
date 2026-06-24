@@ -13,7 +13,7 @@ const json = (data: unknown, status = 200, extra?: Record<string, string>): Resp
     headers: { "Content-Type": "application/json", ...extra },
   });
 
-export const GET: APIRoute = async ({ params, url, clientAddress }) => {
+export const GET: APIRoute = async ({ params, request, clientAddress }) => {
   const ip = clientAddress || "unknown";
   const { allowed, remaining, resetTime } = checkRateLimit(ip);
 
@@ -33,8 +33,9 @@ export const GET: APIRoute = async ({ params, url, clientAddress }) => {
   }
 
   const { id } = params;
-  const fromHash = url.searchParams.get("from");
-  const toHash = url.searchParams.get("to");
+  const searchParams = new URL(request.url).searchParams;
+  const fromHash = searchParams.get("from");
+  const toHash = searchParams.get("to");
 
   if (!id || !fromHash || !toHash) {
     return json({ error: "Parámetros requeridos: id, from, to" }, 400, rlHeaders);

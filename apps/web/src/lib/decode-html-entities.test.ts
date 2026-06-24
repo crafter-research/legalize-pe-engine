@@ -25,6 +25,13 @@ describe("decodeHtmlEntities", () => {
     expect(decodeHtmlEntities("&#xA0;")).toBe(" ");
   });
 
+  it("decodes punctuation entities common in legal titles", () => {
+    expect(decodeHtmlEntities("Directiva N&ordm; 005")).toBe("Directiva Nº 005");
+    expect(decodeHtmlEntities("1&ordf; Disposici&oacute;n")).toBe("1ª Disposición");
+    expect(decodeHtmlEntities("&iquest;Qu&eacute;?")).toBe("¿Qué?");
+    expect(decodeHtmlEntities("30&deg;C")).toBe("30°C");
+  });
+
   it("leaves unknown entities unchanged", () => {
     expect(decodeHtmlEntities("&foobar;")).toBe("&foobar;");
   });
