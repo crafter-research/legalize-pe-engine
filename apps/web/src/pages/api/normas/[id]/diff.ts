@@ -1,30 +1,34 @@
-import path from "node:path";
 import { createGitService } from "@legalize-pe/git-reader";
 import type { APIRoute } from "astro";
+import { resolveNormaPath } from "../../../../lib/norma-path";
 import { checkRateLimit } from "../../../../lib/rate-limit";
 
 export const prerender = false;
 
-// Validación de seguridad para prevenir path traversal e inyección
-const VALID_ID_PATTERN = /^[a-z0-9-]+$/;
 const VALID_HASH_PATTERN = /^[a-f0-9]{7,40}$/;
 
+const json = (data: unknown, status = 200, extra?: Record<string, string>): Response =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json", ...extra },
+  });
+
 export const GET: APIRoute = async ({ params, url, clientAddress }) => {
-  // Rate limiting
   const ip = clientAddress || "unknown";
   const { allowed, remaining, resetTime } = checkRateLimit(ip);
 
+  const rlHeaders = {
+    "X-RateLimit-Limit": "100",
+    "X-RateLimit-Remaining": remaining.toString(),
+    "X-RateLimit-Reset": resetTime.toString(),
+  };
+
   if (!allowed) {
     const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
-    return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-      status: 429,
-      headers: {
-        "Content-Type": "application/json",
-        "X-RateLimit-Limit": "100",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Reset": resetTime.toString(),
-        "Retry-After": retryAfter.toString(),
-      },
+    return json({ error: "Rate limit exceeded. Please try again later." }, 429, {
+      ...rlHeaders,
+      "X-RateLimit-Remaining": "0",
+      "Retry-After": retryAfter.toString(),
     });
   }
 
@@ -33,65 +37,32 @@ export const GET: APIRoute = async ({ params, url, clientAddress }) => {
   const toHash = url.searchParams.get("to");
 
   if (!id || !fromHash || !toHash) {
-    return new Response(JSON.stringify({ error: "Parámetros requeridos: id, from, to" }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "X-RateLimit-Limit": "100",
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": resetTime.toString(),
-      },
-    });
+    return json({ error: "Parámetros requeridos: id, from, to" }, 400, rlHeaders);
   }
 
-  if (!VALID_ID_PATTERN.test(id)) {
-    return new Response(JSON.stringify({ error: "Identificador inválido" }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "X-RateLimit-Limit": "100",
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": resetTime.toString(),
-      },
-    });
+  // Whitelist check: id must exist in the map (blocks path traversal + unknown ids).
+  const resolvedPath = resolveNormaPath(id);
+  if (!resolvedPath) {
+    return json({ error: "Norma no encontrada" }, 404, rlHeaders);
   }
 
   if (!VALID_HASH_PATTERN.test(fromHash) || !VALID_HASH_PATTERN.test(toHash)) {
-    return new Response(JSON.stringify({ error: "Hash de commit inválido" }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "X-RateLimit-Limit": "100",
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": resetTime.toString(),
-      },
-    });
+    return json({ error: "Hash de commit inválido" }, 400, rlHeaders);
   }
 
   try {
-    const repoPath = path.join(process.cwd(), "..", "..");
-    const gitService = createGitService(repoPath);
-    const diff = await gitService.getDiff(id, fromHash, toHash);
+    const gitService = createGitService();
+    const diff = await gitService.getDiff(id, fromHash, toHash, resolvedPath);
 
-    return new Response(JSON.stringify({ data: diff }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "X-RateLimit-Limit": "100",
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": resetTime.toString(),
-      },
-    });
+    return json({ data: diff }, 200, rlHeaders);
   } catch (error) {
     console.error("Error fetching diff:", error);
-    return new Response(JSON.stringify({ error: "Error al obtener la comparación" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "X-RateLimit-Limit": "100",
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": resetTime.toString(),
-      },
-    });
+    return json({ error: "Error al obtener la comparación" }, 500, rlHeaders);
   }
 };
+
+export const ALL: APIRoute = () =>
+  new Response(null, {
+    status: 405,
+    headers: { Allow: "GET" },
+  });
