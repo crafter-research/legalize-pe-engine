@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { decodeHtmlEntities } from "./decode-html-entities";
 import { collectAllNormFiles, normUniqueId, parseFrontmatter } from "./laws";
 
 export interface SearchableLaw {
@@ -66,7 +67,7 @@ export function buildSearchIndex(): SearchableLaw[] {
 
     laws.push({
       identifier: meta.identifier,
-      title: meta.title,
+      title: decodeHtmlEntities(meta.title),
       rank: meta.rank || "",
       status: meta.status || "in_force",
       publication_date: meta.publication_date || "",
@@ -97,7 +98,7 @@ export function buildCompactSearchIndex(): CompactLaw[] {
     const id = normUniqueId(`${absDir.split("/").pop() ?? ""}/${relativePath}`);
     const law: CompactLaw = {
       id,
-      t: meta.title,
+      t: decodeHtmlEntities(meta.title),
       r: meta.rank || "",
       f: meta.publication_date || "",
       b: cleanedBody,

@@ -1,5 +1,6 @@
 import { contentCache, diffCache, historyCache } from "./cache";
-import type { CommitInfo, DiffHunk, DiffResult, FileVersion } from "./types";
+import { parsePatch } from "./diff-parser";
+import type { CommitInfo, DiffResult, FileVersion } from "./types";
 
 const GITHUB_REPO = "crafter-research/legalize-pe";
 const GITHUB_API = "https://api.github.com";
@@ -18,8 +19,16 @@ interface GitHubCommit {
 }
 
 export class GitHubService {
-  private getFilePath(identificador: string): string {
-    return `pe/${identificador}.md`;
+  /**
+   * Resolve the corpus-relative file path for `identificador`.
+   *
+   * The caller (API route) passes the path resolved from `id-path-map.json`
+   * so this service never needs to reconstruct it from the id. If the caller
+   * has already resolved the path it is passed directly; otherwise falls back
+   * to the legacy `pe/<id>.md` pattern (only valid for old national-only ids).
+   */
+  private resolveFilePath(identificador: string, resolvedPath?: string): string {
+    return resolvedPath ?? `pe/${identificador}.md`;
   }
 
   private headers(): Record<string, string> {
@@ -33,21 +42,21 @@ export class GitHubService {
     return headers;
   }
 
-  async hasHistory(identificador: string): Promise<boolean> {
+  async hasHistory(identificador: string, resolvedPath?: string): Promise<boolean> {
     try {
-      const commits = await this.getHistory(identificador);
+      const commits = await this.getHistory(identificador, resolvedPath);
       return commits.length > 0;
     } catch {
       return false;
     }
   }
 
-  async getHistory(identificador: string): Promise<CommitInfo[]> {
+  async getHistory(identificador: string, resolvedPath?: string): Promise<CommitInfo[]> {
     const cacheKey = `history:${identificador}`;
     const cached = historyCache.get(cacheKey) as CommitInfo[] | undefined;
     if (cached) return cached;
 
-    const filePath = this.getFilePath(identificador);
+    const filePath = this.resolveFilePath(identificador, resolvedPath);
     const url = `${GITHUB_API}/repos/${GITHUB_REPO}/commits?path=${encodeURIComponent(filePath)}&per_page=100`;
 
     const res = await fetch(url, {
@@ -73,12 +82,16 @@ export class GitHubService {
     return commits;
   }
 
-  async getContentAtCommit(identificador: string, commitHash: string): Promise<FileVersion> {
+  async getContentAtCommit(
+    identificador: string,
+    commitHash: string,
+    resolvedPath?: string,
+  ): Promise<FileVersion> {
     const cacheKey = `content:${identificador}:${commitHash}`;
     const cached = contentCache.get(cacheKey) as FileVersion | undefined;
     if (cached) return cached;
 
-    const filePath = this.getFilePath(identificador);
+    const filePath = this.resolveFilePath(identificador, resolvedPath);
 
     const contentUrl = `${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodeURIComponent(filePath)}?ref=${commitHash}`;
     const contentRes = await fetch(contentUrl, {
@@ -119,12 +132,17 @@ export class GitHubService {
     return result;
   }
 
-  async getDiff(identificador: string, fromHash: string, toHash: string): Promise<DiffResult> {
+  async getDiff(
+    identificador: string,
+    fromHash: string,
+    toHash: string,
+    resolvedPath?: string,
+  ): Promise<DiffResult> {
     const cacheKey = `diff:${identificador}:${fromHash}:${toHash}`;
     const cached = diffCache.get(cacheKey) as DiffResult | undefined;
     if (cached) return cached;
 
-    const filePath = this.getFilePath(identificador);
+    const filePath = this.resolveFilePath(identificador, resolvedPath);
 
     const compareUrl = `${GITHUB_API}/repos/${GITHUB_REPO}/compare/${fromHash}...${toHash}`;
     const compareRes = await fetch(compareUrl, {
@@ -147,7 +165,7 @@ export class GitHubService {
     };
 
     const file = compareData.files.find((f) => f.filename === filePath);
-    const hunks = file?.patch ? this.parsePatch(file.patch) : [];
+    const hunks = file?.patch ? parsePatch(file.patch) : [];
 
     const result: DiffResult = {
       fromHash,
@@ -163,64 +181,5 @@ export class GitHubService {
 
     diffCache.set(cacheKey, result);
     return result;
-  }
-
-  private parsePatch(patch: string): DiffHunk[] {
-    const hunks: DiffHunk[] = [];
-    const lines = patch.split("\n");
-
-    let currentHunk: DiffHunk | null = null;
-    let oldLine = 0;
-    let newLine = 0;
-
-    for (const line of lines) {
-      const hunkMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
-
-      if (hunkMatch) {
-        if (currentHunk) hunks.push(currentHunk);
-
-        const oldStart = hunkMatch[1];
-        const newStart = hunkMatch[3];
-        if (!oldStart || !newStart) continue;
-
-        oldLine = Number.parseInt(oldStart, 10);
-        newLine = Number.parseInt(newStart, 10);
-
-        currentHunk = {
-          oldStart: oldLine,
-          oldLines: Number.parseInt(hunkMatch[2] ?? "1", 10),
-          newStart: newLine,
-          newLines: Number.parseInt(hunkMatch[4] ?? "1", 10),
-          lines: [],
-        };
-        continue;
-      }
-
-      if (!currentHunk) continue;
-
-      if (line.startsWith("+")) {
-        currentHunk.lines.push({
-          type: "add",
-          content: line.slice(1),
-          newLine: newLine++,
-        });
-      } else if (line.startsWith("-")) {
-        currentHunk.lines.push({
-          type: "del",
-          content: line.slice(1),
-          oldLine: oldLine++,
-        });
-      } else if (line.startsWith(" ") || line === "") {
-        currentHunk.lines.push({
-          type: "context",
-          content: line.slice(1),
-          oldLine: oldLine++,
-          newLine: newLine++,
-        });
-      }
-    }
-
-    if (currentHunk) hunks.push(currentHunk);
-    return hunks;
   }
 }

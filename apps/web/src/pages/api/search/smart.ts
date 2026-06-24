@@ -16,15 +16,23 @@ const json = (data: unknown, status = 200): Response =>
   });
 
 function runSearch(query: string, page: unknown, limit: unknown) {
-  const pageNum = Math.max(1, Number(page) || 1);
-  const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+  // Sanitise page: integer >= 1.
+  const rawPage = Math.floor(Number(page));
+  const pageNum = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+
+  // Sanitise limit: integer clamped to [1, 100].
+  const rawLimit = Math.floor(Number(limit));
+  const limitNum = Number.isFinite(rawLimit) ? Math.min(100, Math.max(1, rawLimit)) : 20;
 
   // Get more results than needed so pagination can slice locally.
   const allResults = intelligentSearch(query, laws, 1000);
 
   const total = allResults.length;
-  const totalPages = Math.ceil(total / limitNum);
-  const startIndex = (pageNum - 1) * limitNum;
+  const totalPages = Math.max(1, Math.ceil(total / limitNum));
+  // Clamp page to totalPages so an out-of-range page returns an empty last page
+  // rather than undefined behaviour from a negative startIndex.
+  const safePage = Math.min(pageNum, totalPages);
+  const startIndex = (safePage - 1) * limitNum;
   const paginatedResults = allResults.slice(startIndex, startIndex + limitNum);
 
   return {
@@ -40,7 +48,7 @@ function runSearch(query: string, page: unknown, limit: unknown) {
       score: r.score,
       matchReasons: r.matchReasons,
     })),
-    pagination: { page: pageNum, limit: limitNum, total, totalPages },
+    pagination: { page: safePage, limit: limitNum, total, totalPages },
   };
 }
 
@@ -74,16 +82,36 @@ export const GET: APIRoute = async ({ request }) => {
 
 // POST /api/search/smart  { query, page?, limit? }
 export const POST: APIRoute = async ({ request }) => {
+  let body: { query?: unknown; page?: unknown; limit?: unknown };
   try {
-    const body = await request.json();
-    const { query, page = 1, limit = 20 } = body;
+    body = await request.json();
+  } catch {
+    // Malformed JSON -> 400, no internal detail leaked.
+    return json({ error: "Invalid JSON body" }, 400);
+  }
 
-    if (!query || typeof query !== "string") {
-      return json({ error: "Query parameter is required and must be a string" }, 400);
-    }
+  // `null`, arrays and primitives are valid JSON but not a request object;
+  // guard before destructuring so they return 400 instead of crashing.
+  if (body === null || typeof body !== "object") {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
 
+  const { query, page = 1, limit = 20 } = body;
+
+  if (!query || typeof query !== "string") {
+    return json({ error: "Query parameter is required and must be a string" }, 400);
+  }
+
+  try {
     return json(runSearch(query, page, limit));
   } catch (error) {
     return errorResponse(error);
   }
 };
+
+// All other HTTP methods -> 405.
+export const ALL: APIRoute = () =>
+  new Response(null, {
+    status: 405,
+    headers: { Allow: "GET, POST" },
+  });
