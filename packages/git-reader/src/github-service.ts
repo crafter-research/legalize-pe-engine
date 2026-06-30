@@ -18,6 +18,15 @@ interface GitHubCommit {
   };
 }
 
+// Carries the upstream HTTP status so callers can tell a missing commit/file
+// (404/422 = client error) apart from a real GitHub outage (5xx = server error).
+export class GitHubApiError extends Error {
+  constructor(public status: number) {
+    super(`GitHub API error: ${status}`);
+    this.name = "GitHubApiError";
+  }
+}
+
 export class GitHubService {
   /**
    * Resolve the corpus-relative file path for `identificador`.
@@ -64,7 +73,7 @@ export class GitHubService {
     });
 
     if (!res.ok) {
-      throw new Error(`GitHub API error: ${res.status}`);
+      throw new GitHubApiError(res.status);
     }
 
     const data = (await res.json()) as GitHubCommit[];
@@ -99,7 +108,7 @@ export class GitHubService {
     });
 
     if (!contentRes.ok) {
-      throw new Error(`GitHub API error: ${contentRes.status}`);
+      throw new GitHubApiError(contentRes.status);
     }
 
     const contentData = (await contentRes.json()) as {
@@ -150,7 +159,7 @@ export class GitHubService {
     });
 
     if (!compareRes.ok) {
-      throw new Error(`GitHub API error: ${compareRes.status}`);
+      throw new GitHubApiError(compareRes.status);
     }
 
     const compareData = (await compareRes.json()) as {

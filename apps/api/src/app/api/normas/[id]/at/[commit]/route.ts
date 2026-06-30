@@ -1,3 +1,4 @@
+import { gitErrorResponse } from "@/lib/git-errors";
 import { createGitService } from "@legalize-pe/git-reader";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -23,10 +24,6 @@ export async function GET(
       data: version,
     });
   } catch (error) {
-    console.error("Error fetching content at commit:", error);
-    return NextResponse.json(
-      { error: "Error al obtener el contenido de la versión" },
-      { status: 500 },
-    );
+    return gitErrorResponse(error, "Error al obtener el contenido de la versión");
   }
 }

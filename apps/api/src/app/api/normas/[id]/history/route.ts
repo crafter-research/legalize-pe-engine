@@ -1,3 +1,4 @@
+import { gitErrorResponse } from "@/lib/git-errors";
 import { createGitService } from "@legalize-pe/git-reader";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -20,7 +21,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       data: commits,
     });
   } catch (error) {
-    console.error("Error fetching history:", error);
-    return NextResponse.json({ error: "Error al obtener el historial" }, { status: 500 });
+    return gitErrorResponse(error, "Error al obtener el historial");
   }
 }
